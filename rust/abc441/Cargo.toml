@@ -1,0 +1,8 @@
+[package]
+name = "abc441"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+ac-library-rs = "0.2.0"
+proconio = { version = "0.5.0", features = ["derive"] }

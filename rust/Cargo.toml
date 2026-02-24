@@ -1,0 +1,4 @@
+[workspace]
+package.edition = "2024"
+resolver = "3"
+members = ["abc132","abc216", "abc227", "abc232", "abc233", "abc294", "abc335", "abc353", "abc355","abc415", "abc426", "abc428", "abc432", "abc436", "abc437", "abc438", "abc439", "abc441", "abc442", "abc443", "abc445", "abc446", "arc107", "arc212", "arc213", "arc214", "awc0001", "awc0002", "awc0003", "keiopc2025"]
