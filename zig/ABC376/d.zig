@@ -7,50 +7,34 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const t = readInt(u32);
-    next: for (0..t) |_| {
-        const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
-        for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
-        }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
-
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
-            }
-        }
-        @panic("");
+    const n = readInt(u32);
+    const m = readInt(u32);
+    var g: [2<<17]std.ArrayList(u32) = undefined;
+    for (1..n+1) |i| g[i] = .initBuffer(&.{});
+    for (0..m) |_| {
+        const a = readInt(u32);
+        const b = readInt(u32);
+        try g[a].append(allocator, b);
     }
+    var queue: FixedQueue(u32, 2<<17) = .{};
+    var dist: [2<<17]u32 = @splat(math.maxInt(u32));
+    dist[1] = 0;
+    queue.push(1);
+    while (queue.pop()) |u| {
+        const d = dist[u];
+        for (g[u].items) |v| {
+            if (v == 1) {
+                print("{d}\n", .{d + 1});
+                return;
+            }
+            if (dist[v] != math.maxInt(u32)) {
+                continue;
+            }
+            dist[v] = d + 1;
+            queue.push(v);
+        }
+    }
+    try stdout.writeAll("-1\n");
 }
 
 const builtin = @import("builtin");

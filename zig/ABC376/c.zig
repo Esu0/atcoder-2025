@@ -7,50 +7,25 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const t = readInt(u32);
-    next: for (0..t) |_| {
-        const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
-        for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
+    const n = readInt(u32);
+    var a: [2<<17]u32 = undefined;
+    var b: [2<<17]u32 = undefined;
+    for (0..n) |i| a[i] = readInt(u32);
+    for (0..n-1) |i| b[i] = readInt(u32);
+    mem.sortUnstable(u32, a[0..n], {}, std.sort.desc(u32));
+    mem.sortUnstable(u32, b[0..n-1], {}, std.sort.desc(u32));
+    var ans: i32 = undefined;
+    var i: u32 = 0;
+    while (i < n - 1 and a[i] <= b[i]) i += 1;
+    ans = @intCast(a[i]);
+    i += 1;
+    // std.debug.print("{d}\n", .{i});
+    while (i < n) : (i += 1) {
+        if (a[i] > b[i-1]) {
+            ans = -1;
         }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
-
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
-            }
-        }
-        @panic("");
     }
+    print("{d}\n", .{ans});
 }
 
 const builtin = @import("builtin");

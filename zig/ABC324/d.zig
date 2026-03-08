@@ -7,50 +7,24 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const t = readInt(u32);
-    next: for (0..t) |_| {
-        const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
+    const n = readInt(u32);
+    const s = readString();
+    assert(s.len == n);
+    const max = math.pow(u64, 10, n);
+    var i: u64 = 0;
+    var set0: [10]u8 = @splat(0);
+    for (s) |si| set0[si - '0'] += 1;
+    var ans: u32 = 0;
+    while (i * i < max) : (i += 1) {
+        var a = i * i;
+        var set: [10]u8 = @splat(0);
         for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
+            set[a % 10] += 1;
+            a /= 10;
         }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
-
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
-            }
-        }
-        @panic("");
+        if (mem.eql(u8, &set0, &set)) ans += 1;
     }
+    print("{d}\n", .{ans});
 }
 
 const builtin = @import("builtin");
@@ -90,7 +64,7 @@ const DebugScanner = struct {
         return true;
     }
 
-    fn nextToken() !?[]u8 {
+    fn next() !?[]u8 {
         while (true) {
             while (pos < line.len and is_delimiter(line[pos])) : (pos += 1) {}
             if (pos >= line.len) {
@@ -105,11 +79,6 @@ const DebugScanner = struct {
             pos = end;
             return ret;
         }
-    }
-
-    fn nextInt(comptime Int: type) !?Int {
-        const token = try nextToken() orelse return null;
-        return try std.fmt.parseInt(Int, token, 10);
     }
 };
 
@@ -128,36 +97,16 @@ const OptimizedScanner = struct {
         input = input_buf[0..size];
     }
 
-    fn getChar() ?u8 {
-        defer pos += 1;
-        return input[pos];
-    }
-
-    fn nextInt(comptime Int: type) !?Int {
-        var result: Int = 0;
-        var ch = getChar() orelse return null;
-        var neg = false;
-        if (@typeInfo(Int).int.signedness == .signed) {
-            if (ch == '-') {
-                neg = true;
-                ch = getChar().?;
-            }
+    fn next() !?[]u8 {
+        while (pos < input.len and is_delimiter(input[pos])) : (pos += 1) {}
+        if (pos >= input.len) {
+            return null;
         }
-        while (ch >= '0') {
-            result = result * 10 + @as(Int, @intCast(ch - '0'));
-            ch = getChar().?;
-        }
-        if (@typeInfo(Int).int.signedness == .signed) {
-            if (neg) result = -result;
-        }
-        return result;
-    }
-
-    fn nextToken() !?[]u8 {
-        const old_pos = pos;
-        while (input[pos] > ' ') pos += 1;
-        defer pos += 1;
-        return input[old_pos..pos];
+        var end = pos;
+        while (end < input.len and !is_delimiter(input[end])) : (end += 1) {}
+        const ret = input[pos..end];
+        pos = end;
+        return ret;
     }
 };
 
@@ -182,32 +131,45 @@ fn ignoreError(value: anytype) ErrorUnionPayload(@TypeOf(value)) {
     return value catch unreachable;
 }
 
-fn readInt(comptime Int: type) Int {
-    return readIntOptional(Int).?;
+fn tryReadInt(comptime T: type) !T {
+    const token = try Scanner.next() orelse return error.UnexpectedEof;
+    return std.fmt.parseInt(T, token, 10);
 }
 
-fn readIntOptional(comptime Int: type) ?Int {
-    return ignoreError(Scanner.nextInt(Int));
+fn tryReadIntOptional(comptime T: type) !?T {
+    const token = try Scanner.next() orelse return null;
+    return try std.fmt.parseInt(T, token, 10);
+}
+
+fn readInt(comptime T: type) T {
+    return ignoreError(tryReadInt(T));
+}
+
+fn readIntOptional(comptime T: type) ?T {
+    return ignoreError(tryReadIntOptional(T));
+}
+
+fn tryReadString() ![]u8 {
+    const token = try Scanner.next() orelse return error.UnexpectedEof;
+    return token;
+}
+
+fn tryReadStringOptional() !?[]u8 {
+    return try Scanner.next();
 }
 
 fn readString() []u8 {
-    return readStringOptional().?;
+    return ignoreError(tryReadString());
 }
 
 fn readStringOptional() ?[]u8 {
-    return ignoreError(Scanner.nextToken());
+    return ignoreError(tryReadStringOptional());
 }
 
 fn readChar() u8 {
-    if (Scanner == DebugScanner) {
-        const token = readString();
-        std.debug.assert(token.len == 1);
-        return token[0];
-    } else {
-        assert(Scanner == OptimizedScanner);
-        defer OptimizedScanner.pos += 1;
-        return OptimizedScanner.getChar().?;
-    }
+    const token = readString();
+    std.debug.assert(token.len == 1);
+    return token[0];
 }
 
 fn print(comptime fmt: []const u8, args: anytype) void {

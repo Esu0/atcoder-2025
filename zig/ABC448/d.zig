@@ -6,50 +6,46 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
-pub fn solve() !void {
-    const t = readInt(u32);
-    next: for (0..t) |_| {
-        const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
-        for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
-        }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
+var N: u32 = undefined;
+var G: [2<<17]std.ArrayList(u32) = undefined;
+var dp: [2<<17]bool = @splat(false);
+var set: std.AutoHashMap(u32, void) = undefined;
+var A: [2<<17]u32 = undefined;
 
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
+fn dfs(p: u32, u: u32, f: bool) void {
+    if (f or set.contains(A[u])) {
+        dp[u] = true;
+        for (G[u].items) |v| {
+            if (v != p) {
+                dfs(u, v, true);
             }
         }
-        @panic("");
+        return;
+    }
+    set.putNoClobber(A[u], {}) catch unreachable;
+    dp[u] = false;
+    for (G[u].items) |v| {
+        if (v != p) {
+            dfs(u, v, false);
+        }
+    }
+    assert(set.remove(A[u]));
+}
+
+pub fn solve() !void {
+    N = readInt(u32);
+    for (0..N) |i| A[i] = readInt(u32);
+    for (0..N) |i| G[i] = .initBuffer(&.{});
+    set = .init(allocator);
+    for (0..N-1) |_| {
+        const u = readInt(u32) - 1;
+        const v = readInt(u32) - 1;
+        try G[u].append(allocator, v);
+        try G[v].append(allocator, u);
+    }
+    dfs(math.maxInt(u32), 0, false);
+    for (0..N) |i| {
+        try stdout.writeAll(if (dp[i]) "Yes\n" else "No\n");
     }
 }
 

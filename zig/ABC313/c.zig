@@ -6,51 +6,26 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
+fn absDiff(lhs: u64, rhs: u64) u64 {
+    return if (lhs > rhs) lhs - rhs else rhs - lhs;
+}
 pub fn solve() !void {
-    const t = readInt(u32);
-    next: for (0..t) |_| {
-        const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
-        for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
-        }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
-
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
-            }
-        }
-        @panic("");
+    const n = readInt(u32);
+    var sum: u64 = 0;
+    var a: [2<<17]u32 = undefined;
+    for (0..n) |i| {
+        a[i] = readInt(u32);
+        sum += a[i];
     }
+    const d = sum / n;
+    const rem = sum % n;
+    mem.sortUnstable(u32, a[0..n], {}, std.sort.desc(u32));
+    var ans: u64 = 0;
+    for (0..n) |i| {
+        if (i < rem) ans += absDiff(d + 1, a[i]) else ans += absDiff(d, a[i]);
+    }
+    assert(ans % 2 == 0);
+    print("{d}\n", .{ans / 2});
 }
 
 const builtin = @import("builtin");

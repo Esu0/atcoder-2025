@@ -8,48 +8,34 @@ const safety = false;
 
 pub fn solve() !void {
     const t = readInt(u32);
-    next: for (0..t) |_| {
+    for (0..t) |_| {
         const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
-        for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
+        const k = readInt(u32);
+        var ab: [2<<17]struct {u32, u32} = undefined;
+        for (0..n) |i| ab[i][0] = readInt(u32);
+        for (0..n) |i| ab[i][1] = readInt(u32);
+        mem.sortUnstable(struct {u32, u32}, ab[0..n], {}, struct { fn lessThan(_: void, lhs: struct {u32, u32}, rhs: struct {u32, u32}) bool {
+            // if (lhs[0] == rhs[0]) return lhs[1] > rhs[1];
+            return lhs[0] < rhs[0];
+        }}.lessThan);
+        var queue: std.PriorityQueue(u32, void, struct { fn compare(_: void, lhs: u32, rhs: u32) math.Order {
+            return math.order(rhs, lhs);
+        }}.compare) = .init(allocator, {});
+        var sum: u64 = 0;
+        var i: u32 = 0;
+        while (i < k - 1) : (i += 1) {
+            try queue.add(ab[i][1]);
+            sum += ab[i][1];
         }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
-
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
-            }
+        var ans: u64 = math.maxInt(u64);
+        while (i < n) : (i += 1) {
+            const ai, const bi = ab[i];
+            try queue.add(bi);
+            sum += bi;
+            ans = @min(ans, sum * ai);
+            sum -= queue.remove();
         }
-        @panic("");
+        print("{d}\n", .{ans});
     }
 }
 

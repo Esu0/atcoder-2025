@@ -6,51 +6,40 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
-pub fn solve() !void {
-    const t = readInt(u32);
-    next: for (0..t) |_| {
-        const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
-        for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
-        }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
+const MInt = ModInt(998244353);
 
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
-            }
-        }
-        @panic("");
+pub fn solve() !void {
+    const n = readInt(u32);
+    var a: [2<<17]u32 = undefined;
+    for (0..n) |i| a[i] = readInt(u32);
+
+    const B = 420;
+    var dp: [2<<17]MInt = undefined;
+    var dps: [B+1][B]MInt = @splat(@splat(.zero));
+    dp[n - 1] = .one;
+    for (1..B+1) |i| {
+        dps[i][(n - 1) % i] = .one;
     }
+
+    var i: u32 = n - 1;
+    while (i > 0) {
+        i -= 1;
+        const ai = a[i];
+        var v: MInt = .one;
+        if (ai > B) {
+            var j: u32 = i + ai;
+            while (j < n) : (j += ai) {
+                v = v.add(dp[j]);
+            }
+        } else {
+            v = v.add(dps[ai][i % ai]);
+        }
+        dp[i] = v;
+        for (1..B+1) |j| {
+            dps[j][i % j] = dps[j][i % j].add(v);
+        }
+    }
+    print("{d}\n", .{dp[0].value});
 }
 
 const builtin = @import("builtin");

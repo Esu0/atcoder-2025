@@ -6,51 +6,73 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
-pub fn solve() !void {
-    const t = readInt(u32);
-    next: for (0..t) |_| {
-        const n = readInt(u32);
-        var yz: [2<<17]struct {u32, u32, u32, u32, u32} = undefined;
-        for (1..n + 1) |i| yz[i][4] = 0;
-        for (0..n) |_| {
-            const x = readInt(u32);
-            const y = readInt(u32);
-            const z = readInt(u32);
-            if (yz[x][4] == 0) {
-                yz[x] = .{ y, y, z, z, 1 };
-            } else {
-                const ymax, const ymin, const zmax, const zmin, const cnt = yz[x];
-                assert(ymax >= ymin);
-                assert(zmax >= zmin);
-                yz[x] = .{ @max(ymax, y), @min(ymin, y), @max(zmax, z), @min(zmin, z), cnt + 1 };
-            }
-        }
-        var max: struct {u32, u32} = .{0, 0};
-        var cummax: [2<<17]struct {u32, u32} = undefined;
-        { var i: u32 = 1; while (i <= n) : (i += 1) {
-            cummax[i] = max;
-            if (yz[i][4] != 0) {
-                max[0] = @max(max[0], yz[i][0]);
-                max[1] = @max(max[1], yz[i][2]);
-            }
-        }}
+const Query = union(enum) {
+    stop: u32,
+    distance: struct {u16, u16},
+};
 
-        var acc = .{ n + 1, n + 1 };
-        var cnt: u32 = 0;
-        var i = n;
-        while (i > 0) : (i -= 1) {
-            if (yz[i][4] == 0) continue;
-            _, const ymin, _, const zmin, const c = yz[i];
-            cnt += c;
-            acc[0] = @min(acc[0], ymin);
-            acc[1] = @min(acc[1], zmin);
-            if (acc[0] > cummax[i][0] and acc[1] > cummax[i][1]) {
-                print("{d}\n", .{cnt});
-                continue :next;
+const INF = math.maxInt(u64) / 1000;
+pub fn solve() !void {
+    const n = readInt(u32);
+    const m = readInt(u32);
+    const q = readInt(u32);
+    var queries: [2<<17]Query = undefined;
+    var mat: [300][300]u64 = @splat(@splat(INF));
+    for (0..n) |i| mat[i][i] = 0;
+    var abc: [300*299/2]struct {u16, u16, u32} = undefined;
+    for (0..m) |i| {
+        const a = readInt(u16) - 1;
+        const b = readInt(u16) - 1;
+        const c = readInt(u32);
+        abc[i] = .{ a, b, c };
+        mat[a][b] = c;
+        mat[b][a] = c;
+    }
+    for (0..q) |i| {
+        const t = readInt(u4);
+        if (t == 1) {
+            const j = readInt(u32) - 1;
+            const a, const b, _ = abc[j];
+            mat[a][b] = INF;
+            mat[b][a] = INF;
+            queries[i] = .{ .stop = j };
+        } else {
+            queries[i] = .{ .distance = .{ readInt(u16) - 1, readInt(u16) - 1 } };
+        }
+    }
+
+    for (0..n) |j| {
+        for (0..n) |i| {
+            for (0..n) |k| {
+                mat[i][k] = @min(mat[i][k], mat[i][j] + mat[j][k]);
             }
         }
-        @panic("");
     }
+
+    var ans = try std.ArrayList(i64).initCapacity(allocator, q);
+    var i = q;
+    while (i > 0) {
+        i -= 1;
+        switch (queries[i]) {
+            .stop => |j| {
+                const a, const b, const c = abc[j];
+                for (0..n) |u| {
+                    for (0..n) |v| {
+                        mat[u][v] = @min(mat[u][v], @min(mat[u][a] + c + mat[b][v], mat[u][b] + c + mat[a][v]));
+                    }
+                }
+            },
+            .distance => |uv| {
+                const u, const v = uv;
+                if (mat[u][v] >= INF) {
+                    ans.appendAssumeCapacity(-1);
+                } else {
+                    ans.appendAssumeCapacity(@intCast(mat[u][v]));
+                }
+            },
+        }
+    }
+    while (ans.pop()) |d| print("{d}\n", .{d});
 }
 
 const builtin = @import("builtin");
