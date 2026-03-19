@@ -1,0 +1,2 @@
+#!/bin/bash
+vvp -n $1

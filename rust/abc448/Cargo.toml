@@ -1,0 +1,8 @@
+[package]
+name = "abc448"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+proconio = { version = "0.5.0", features = ["derive"] }
+rand = "0.10.0"

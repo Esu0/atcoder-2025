@@ -1,0 +1,2 @@
+#!/bin/bash
+iverilog -g2012 -DONLINE_JUDGE -DATCODER $1
