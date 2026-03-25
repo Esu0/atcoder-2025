@@ -1,0 +1,1 @@
+for ((i = 0; i < 1000; i++)) { python3 test.py > in; diff <(zig run c.zig < in) <(zig run c2.zig < in); }
