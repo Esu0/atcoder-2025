@@ -7,45 +7,22 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
-        }
+    const n = readInt(u32);
+    const m = readInt(u32);
+    const k = readInt(u32);
+    if (k >= m) {
+        try stdout.writeAll("0\n");
+        return;
     }
-
+    var a: [1<<19]u32 = undefined;
+    for (0..n) |i| a[i] = readInt(u32);
+    mem.sortUnstable(u32, a[0..n], {}, std.sort.asc(u32));
+    var w: u32 = math.maxInt(u32);
+    var i: u32 = 0;
+    while (i + m - k <= n) : (i += 1) {
+        w = @min(a[i + m - k - 1] - a[i], w);
+    }
+    print("{d}\n", .{(w + 1) / 2});
 }
 
 const builtin = @import("builtin");

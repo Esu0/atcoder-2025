@@ -7,45 +7,29 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
+    const x = readString();
+    var rev: [26]u8 = undefined;
+    {var c: u8 = 0; while (c < 26) : (c += 1) {
+        rev[x[c] - 'a'] = c + 'a';
+    }}
+
+    const n = readInt(u32);
+    var s: [50000][]u8 = undefined;
+    for (0..n) |i| {
+        s[i] = readString();
+        for (0..s[i].len) |j| {
+            s[i][j] = rev[s[i][j] - 'a'];
         }
     }
-
+    mem.sortUnstable([]u8, s[0..n], {}, struct {fn lessThan(_: void, lhs: []u8, rhs: []u8) bool {
+        return mem.order(u8, lhs, rhs) == .lt;
+    }}.lessThan);
+    for (0..n) |i| {
+        for (s[i]) |si| {
+            print("{c}", .{x[si - 'a']});
+        }
+        print("\n", .{});
+    }
 }
 
 const builtin = @import("builtin");

@@ -7,45 +7,33 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
+    const n = readInt(u32);
+    var ab: [10]struct {u32, u32} = undefined;
+    for (0..n) |i| ab[i] = .{ readInt(u32), readInt(u32) };
+    var sets: [10][26]bool = @splat(@splat(false));
+    const m = readInt(u32);
+    var s: [2<<17][]u8 = undefined;
+    for (0..m) |i| {
+        s[i] = readString();
+        for (0..n) |j| {
+            if (s[i].len == ab[j][0]) {
+                sets[j][s[i][ab[j][1] - 1] - 'a'] = true;
             }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
         }
     }
-
+    next: for (0..m) |i| {
+        if (s[i].len != n) {
+            print("No\n", .{});
+            continue;
+        }
+        for (0..n) |j| {
+            if (sets[j][s[i][j] - 'a'] == false) {
+                print("No\n", .{});
+                continue :next;
+            }
+        }
+        print("Yes\n", .{});
+    }
 }
 
 const builtin = @import("builtin");

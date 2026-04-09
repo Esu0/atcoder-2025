@@ -7,45 +7,26 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
+    const n = readInt(u32);
+    var sum: u64 = 0;
+    var a: [1<<17]u32 = undefined;
+    for (0..n) |i| {
+        a[i] = readInt(u32);
+        sum += a[i];
+    }
+    var x = readInt(u64);
+    var ans: u64 = x / sum * n;
+    x %= sum;
+    var s: u64 = 0;
+    for (0..n) |i| {
+        ans += 1;
+        s += a[i];
+        if (s > x) {
+            print("{d}\n", .{ans});
+            return;
         }
     }
-
+    @panic("");
 }
 
 const builtin = @import("builtin");

@@ -7,45 +7,25 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
+    const n = readInt(u32);
+    var w = readInt(u32);
+    var ab: [3<<17]struct {u32, u32} = undefined;
+    for (0..n) |i| ab[i] = .{ readInt(u32), readInt(u32) };
+    mem.sortUnstable(struct {u32, u32}, ab[0..n], {}, struct {fn lessThan(_: void, lhs: struct {u32, u32}, rhs: struct {u32, u32}) bool {
+        return lhs[0] > rhs[0];
+    }}.lessThan);
+    var ans: u64 = 0;
+    for (ab[0..n]) |abi| {
+        const ai, const bi = abi;
+        if (w <= bi) {
+            ans += @as(u64, ai) * w;
+            break;
         } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
+            ans += @as(u64, ai) * bi;
+            w -= bi;
         }
     }
-
+    print("{d}\n", .{ans});
 }
 
 const builtin = @import("builtin");

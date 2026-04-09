@@ -7,45 +7,45 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
+    const n = readInt(u32);
+    const k = readInt(u64);
+    var p: [5<<17]u32 = undefined;
+    for (0..n) |i| p[i] = readInt(u32) - 1;
+    const buf = try allocator.alloc(u32, n);
+    @memset(buf, 0);
+    var fw: FenwickTree(u32, struct { fn binOp(lhs: u32, rhs: u32) u32 {
+        return lhs +% rhs;
+    }}.binOp) = .init(buf);
+    var ans: u64 = 0;
+    var inv: u64 = 0;
+    var i: u32 = 0;
+    var j: u32 = 0;
+    while (i < n) : (i += 1) {
+        while (j < n and inv < k) : (j += 1) {
+            inv += j - i - (fw.prefixSum(p[j]) orelse 0);
+            fw.add(p[j], 1);
         }
+        std.debug.print("j: {d}\n", .{j});
+        ans += n - j;
+        
+        inv -= fw.prefixSum(p[i]) orelse 0;
+        fw.add(p[i], math.maxInt(u32));
     }
-
+    std.debug.print("\n", .{});
+    i = 0;
+    j = 0;
+    inv = 0;
+    while (i < n) : (i += 1) {
+        while (j < n and inv <= k) : (j += 1) {
+            inv += j - i - (fw.prefixSum(p[j]) orelse 0);
+            fw.add(p[j], 1);
+        }
+        std.debug.print("j: {d}\n", .{j});
+        ans -= n - j;
+        inv -= fw.prefixSum(p[i]) orelse 0;
+        fw.add(p[i], math.maxInt(u32));
+    }
+    print("{d}\n", .{ans});
 }
 
 const builtin = @import("builtin");
@@ -508,5 +508,50 @@ pub fn ModIntEx(modulo: comptime_int, comptime modulo_is_prime: bool) type {
                 return if (k > n) .zero else self.factorial[n].mul(self.factorial_inv[k]).mul(self.factorial_inv[n - k]);
             }
         };
+    };
+}
+
+pub fn FenwickTree(comptime T: type, comptime binaryOperation: fn (T, T) T) type {
+    return struct {
+        const Self = @This();
+        const Item = T;
+        fn binaryAdd(a: Item, b: Item) Item {
+            return binaryOperation(a, b);
+        }
+
+        items: []Item,
+
+        pub fn init(items: []Item) Self {
+            const len = items.len;
+            for (0..len) |i| {
+                const idx_to = (i + 1) | i;
+                if (idx_to < len) {
+                    items[idx_to] = binaryAdd(items[i], items[idx_to]);
+                }
+            }
+            return .{
+                .items = items,
+            };
+        }
+
+        pub fn prefixSum(self: *const Self, count: usize) ?Item {
+            if (count == 0) {
+                return null;
+            }
+            var cur = self.items[count - 1];
+            var remaining = (count - 1) & count;
+            while (remaining > 0) : (remaining = (remaining - 1) & remaining){
+                cur = binaryAdd(self.items[remaining - 1], cur);
+            }
+            return cur;
+        }
+
+        pub fn add(self: *const Self, idx: usize, val: Item) void {
+            std.debug.assert(idx < self.items.len);
+            var cur = idx;
+            while (cur < self.items.len) : (cur = (cur + 1) | cur) {
+                self.items[cur] = binaryAdd(self.items[cur], val);
+            }
+        }
     };
 }

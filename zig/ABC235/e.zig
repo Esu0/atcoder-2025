@@ -7,45 +7,34 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
+    const n = readInt(u32);
+    const m = readInt(u32);
     const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
+    const Item = struct {?u32, u32, u32, u32};
+    var iuvw: [4<<17]Item = undefined;
+    for (0..m) |i| {
+        iuvw[i] = .{ null, readInt(u32) - 1, readInt(u32) - 1, readInt(u32) };
+    }
+    {var i: u32 = 0;
+    while (i < q) : (i += 1) {
+        iuvw[i+m] = .{ i, readInt(u32) - 1, readInt(u32) - 1, readInt(u32) };
+    }}
+    mem.sortUnstable(Item, iuvw[0..m+q], {}, struct {fn lessThan(_: void, lhs: Item, rhs: Item) bool {
+        return lhs[3] < rhs[3];
+    }}.lessThan);
+    var ans = try allocator.alloc(bool, q);
+    var uf = try Unionfind.init(allocator, n);
+    for (iuvw[0..m+q]) |iuvw_| {
+        const i, const u, const v, _ = iuvw_;
+        if (i) |idx| {
+            const ru = uf.find(u);
+            const rv = uf.find(v);
+            ans[idx] = ru != rv;
         } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
+            _ = uf.unite(u, v);
         }
     }
-
+    for (0..q) |i| try stdout.writeAll(if (ans[i]) "Yes\n" else "No\n");
 }
 
 const builtin = @import("builtin");

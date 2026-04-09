@@ -5,47 +5,36 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
+const MInt = ModInt(998244353);
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
-        }
+    const n = readInt(u32);
+    const m = readInt(u32);
+    var asum2: [1<<20]MInt = undefined;
+    var asum: [1<<20]MInt = undefined;
+    asum2[0] = .zero;
+    asum[0] = .zero;
+    asum2[1] = .zero;
+    asum[1] = .zero;
+    for (1..n+1) |i| {
+        const ai = MInt.init(readInt(u32));
+        asum[i + 1] = asum[i].add(ai);
+        asum2[i + 1] = asum2[i].add(ai.mul(.init(i)));
     }
-
+    for (n+1..n+m+2) |i| {
+        asum[i + 1] = asum[i];
+        asum2[i + 1] = asum2[i];
+    }
+    var ans: MInt = .zero;
+    for (1..m+1) |j| {
+        var i: usize = 0;
+        var sum: MInt = .zero;
+        while (i <= n) : (i += j) {
+            sum = sum.add(asum2[i + j].sub(asum2[i]).sub(asum[i + j].sub(asum[i]).mul(.init(i))));
+        }
+        ans = ans.add(sum.mul(.init(readInt(u32))));
+    }
+    print("{d}\n", .{ans.value});
 }
 
 const builtin = @import("builtin");

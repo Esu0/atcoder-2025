@@ -7,45 +7,28 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
+    const n = readInt(u32);
     const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
+    var inds: std.AutoHashMap(u32, std.ArrayList(u32)) = .init(allocator);
+    var i: u32 = 1;
+    while (i <= n) : (i += 1) {
+        const a = readInt(u32);
+        const result = try inds.getOrPut(a);
+        if (!result.found_existing) {
+            result.value_ptr.* = try .initCapacity(allocator, 1);
+        }
+        try result.value_ptr.*.append(allocator, i);
+    }
     for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
+        const x = readInt(u32);
+        const k = readInt(u32);
+        const a = inds.get(x);
+        if (a == null or a.?.items.len < k) {
+            try stdout.writeAll("-1\n");
         } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
+            print("{d}\n", .{a.?.items[k - 1]});
         }
     }
-
 }
 
 const builtin = @import("builtin");

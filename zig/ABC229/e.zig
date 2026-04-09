@@ -7,45 +7,30 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
+    const n = readInt(u32);
+    const m = readInt(u32);
+    var g: [2<<17]std.ArrayList(u32) = undefined;
+    for (0..n) |i| g[i] = .initBuffer(&.{});
+    for (0..m) |_| {
+        const a = readInt(u32) - 1;
+        const b = readInt(u32) - 1;
+        try g[a].append(allocator, b);
+    }
+    var ans: std.ArrayList(u32) = try .initCapacity(allocator, n);
+    var uf = try Unionfind.init(allocator, n);
+    var cc: u32 = 0;
+    var i: u32 = n;
+    while (i > 0) {
+        i -= 1;
+        ans.appendAssumeCapacity(cc);
+        cc += 1;
+        for (g[i].items) |v| {
+            if (uf.unite(i, v)) {
+                cc -= 1;
             }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
         }
     }
-
+    while (ans.pop()) |x| print("{d}\n", .{x});
 }
 
 const builtin = @import("builtin");

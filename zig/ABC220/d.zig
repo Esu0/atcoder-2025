@@ -5,47 +5,23 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
+const MInt = ModInt(998244353);
 
 pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
+    const n = readInt(u32);
+    var dp: [10]MInt = @splat(.zero);
+    const a0 = readChar() - '0';
+    dp[a0] = .one;
+    for (1..n) |_| {
+        const a = readChar() - '0';
+        var ndp: [10]MInt = @splat(.zero);
+        for (0..10) |i| {
+            ndp[(i + a) % 10] = ndp[(i + a) % 10].add(dp[i]);
+            ndp[(i * a) % 10] = ndp[(i * a) % 10].add(dp[i]);
         }
+        dp = ndp;
     }
-
+    for (0..10) |i| print("{d}\n", .{dp[i].value});
 }
 
 const builtin = @import("builtin");

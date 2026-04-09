@@ -6,46 +6,32 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
-pub fn solve() !void {
-    const q = readInt(u32);
-    const Set = std.Treap(u32, math.order);
-    var set: Set = .{};
-    const Node = Set.Node;
-    const Item = struct {
-        node: Node,
-        count: u32,
-    };
-    for (0..q) |_| {
-        const t = readChar() - '0';
-        if (t == 1) {
-            const x = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                itemptr.count += 1;
-            } else {
-                const itemptr = try allocator.create(Item);
-                itemptr.count = 1;
-                entry.set(&itemptr.node);
-            }
-        } else if (t == 2) {
-            const x = readInt(u32);
-            const c = readInt(u32);
-            var entry = set.getEntryFor(x);
-            if (entry.node) |node| {
-                const itemptr: *Item = @fieldParentPtr("node", node);
-                if (itemptr.count <= c) {
-                    entry.set(null);
-                } else {
-                    itemptr.count -= c;
-                }
-            }
-        } else {
-            assert(t == 3);
-            print("{d}\n", .{set.getMax().?.key - set.getMin().?.key});
-        }
-    }
+fn tof(x: u32) f64 {
+    return @floatFromInt(x);
+}
 
+pub fn solve() !void {
+    const n = readInt(u32);
+    var ab: [1<<17]struct {u32, u32} = undefined;
+    var t: f64 = 0;
+    for (0..n) |i| {
+        ab[i] = .{ readInt(u32), readInt(u32) };
+        const ai, const bi = ab[i];
+        t += tof(ai) / tof(bi);
+    }
+    var p: f64 = 0;
+    var t2: f64 = 0;
+    t /= 2;
+    for (ab[0..n]) |abi| {
+        const ai, const bi = abi;
+        const nt = t2 + tof(ai) / tof(bi);
+        if (nt > t) {
+            print("{d:.15}\n", .{p + tof(bi) * (t - t2)});
+            return;
+        }
+        p += tof(ai);
+        t2 = nt;
+    }
 }
 
 const builtin = @import("builtin");
