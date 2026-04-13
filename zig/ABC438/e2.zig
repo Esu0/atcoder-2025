@@ -6,16 +6,36 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 
 pub fn solve() !void {
-    var n = readInt(u32);
-    const k = readInt(u32);
-    var x: u64 = 0;
-    for (0..1_000_000_000) |i| {
-        x += n;
-        n += 1;
-        if (x >= k) {
-            print("{d}\n", .{i});
-            return;
+    const n = readInt(u32);
+    const q = readInt(u32);
+    var double: [30][]struct {u32, u64} = undefined;
+    for (0..30) |i| {
+        double[i] = try allocator.alloc(struct{u32, u64}, n);
+    }
+    for (0..n) |i| {
+        double[0][i] = .{ readInt(u32) - 1, @intCast(i + 1) };
+    }
+    for (1..30) |k| {
+        for (0..n) |i| {
+            const to, const add = double[k - 1][i];
+            const to2, const add2 = double[k - 1][to];
+            double[k][i] = .{ to2, add + add2 };
         }
+    }
+
+    for (0..q) |_| {
+        var t = readInt(u32);
+        var b = readInt(u32) - 1;
+        var ans: u64 = 0;
+        var k: u8 = 0;
+        while (t > 0) : (t >>= 1) {
+            if (t & 1 != 0) {
+                ans += double[k][b][1];
+                b = double[k][b][0];
+            }
+            k += 1;
+        }
+        print("{d}\n", .{ans});
     }
 }
 

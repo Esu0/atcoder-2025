@@ -4,19 +4,40 @@ const mem = std.mem;
 const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
+const safety = false;
+
+var t: [8][8]u32 = undefined;
+var P: [8]u8 = undefined;
+var ans: u32 = 0;
+var N: u8 = undefined;
+var K: u32 = undefined;
+fn dfs(i: u8) void {
+    if (i == N) {
+        var time: u32 = t[P[N-1]][0];
+        for (1..N) |j| {
+            time += t[P[j-1]][P[j]];
+        }
+        if (time == K) ans += 1;
+        return;
+    }
+
+    var j: u8 = i;
+    while (j < N) : (j += 1) {
+        mem.swap(u8, &P[i], &P[j]);
+        dfs(i + 1);
+        mem.swap(u8, &P[i], &P[j]);
+    }
+}
 
 pub fn solve() !void {
-    var n = readInt(u32);
-    const k = readInt(u32);
-    var x: u64 = 0;
-    for (0..1_000_000_000) |i| {
-        x += n;
-        n += 1;
-        if (x >= k) {
-            print("{d}\n", .{i});
-            return;
-        }
+    N = readInt(u8);
+    K = readInt(u32);
+    for (0..N) |i| {
+        for (0..N) |j| t[i][j] = readInt(u32);
     }
+    for (0..N) |i| P[i] = @intCast(i);
+    dfs(1);
+    print("{d}\n", .{ans});
 }
 
 const builtin = @import("builtin");
@@ -116,10 +137,11 @@ fn ErrorUnionPayload(comptime T: type) type {
 }
 
 fn ignoreError(value: anytype) ErrorUnionPayload(@TypeOf(value)) {
-    return value catch |err| {
-        std.log.err("{any}", .{err});
-        @panic("");
-    };
+    // return value catch |err| {
+    //     std.log.err("{any}", .{err});
+    //     @panic("");
+    // };
+    return value catch unreachable;
 }
 
 fn tryReadInt(comptime T: type) !T {
@@ -168,9 +190,15 @@ fn print(comptime fmt: []const u8, args: anytype) void {
 }
 
 pub fn main() !void {
-    try Scanner.init();
-    try solve();
-    try stdout.flush();
+    if (safety) {
+        try Scanner.init();
+        try solve();
+        try stdout.flush();
+    } else {
+        Scanner.init() catch unreachable;
+        solve() catch unreachable;
+        stdout.flush() catch unreachable;
+    }
 }
 
 fn FixedQueue(comptime T: type, comptime max_size: u32) type {
@@ -180,6 +208,10 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
         rp: u32 = 0,
         wp: u32 = 0,
 
+        pub fn clear(self: *Self) void {
+            self.rp = 0;
+            self.wp = 0;
+        }
         pub fn push(self: *Self, item: T) void {
             self.buf[self.wp] = item;
             self.wp += 1;
@@ -191,6 +223,52 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
             const rp = self.rp;
             self.rp = rp + 1;
             return self.buf[rp];
+        }
+    };
+}
+
+fn FixedDeque(comptime T: type, comptime front_cap: comptime_int, comptime back_cap: comptime_int) type {
+    return struct {
+        const Self = @This();
+        buf: [front_cap+back_cap]T = undefined,
+        head: u32 = front_cap,
+        tail: u32 = front_cap,
+
+        pub fn clear(self: *Self) void {
+            self.head = front_cap;
+            self.tail = front_cap;
+        }
+        pub fn len(self: *const Self) u32 {
+            return self.tail - self.head;
+        }
+        pub fn isEmpty(self: *const Self) bool {
+            return self.tail == self.head;
+        }
+        pub fn pushBack(self: *Self, item: T) void {
+            self.buf[self.tail] = item;
+            self.tail += 1;
+        }
+        pub fn pushFront(self: *Self, item: T) void {
+            self.head -= 1;
+            self.buf[self.head] = item;
+        }
+        pub fn popBack(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            self.tail -= 1;
+            return self.buf[self.tail];
+        }
+        pub fn popFront(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            defer self.head += 1;
+            return self.buf[self.head];
+        }
+        pub fn front(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.head];
+        }
+        pub fn back(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.tail - 1];
         }
     };
 }
@@ -250,7 +328,7 @@ const Unionfind = struct {
 
     pub fn clear(self: Self) void {
         @memset(self.size, 1);
-        @memset(self.parent, std.math.maxInt(usize));
+        @memset(self.parent, std.math.maxInt(u32));
     }
 };
 
