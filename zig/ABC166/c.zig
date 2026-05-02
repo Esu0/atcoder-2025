@@ -7,16 +7,27 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    var map: std.AutoHashMap(u32, i32) = .init(allocator);
     const n = readInt(u32);
-    try map.ensureTotalCapacity(n);
-    var i: u31 = 1;
-    while (i <= n) : (i += 1) {
+    const m = readInt(u32);
+    var h: [1<<17]u32 = undefined;
+    for (1..n+1) |i| h[i] = readInt(u32);
+    var g: [1<<17]std.ArrayList(u32) = undefined;
+    for (1..n+1) |i| g[i] = .initBuffer(&.{});
+    for (0..m) |_| {
         const a = readInt(u32);
-        print("{d} ", .{map.get(a) orelse -1});
-        map.putAssumeCapacity(a, i);
+        const b = readInt(u32);
+        try g[a].append(allocator, b);
+        try g[b].append(allocator, a);
     }
-    try stdout.writeByte('\n');
+    var ans: u32 = 0;
+    for (1..n+1) |i| {
+        var inc: u1 = 1;
+        for (g[i].items) |j| {
+            if (h[i] <= h[j]) inc = 0;
+        }
+        ans += inc;
+    }
+    print("{d}\n", .{ans});
 }
 
 const builtin = @import("builtin");
@@ -56,7 +67,7 @@ const DebugScanner = struct {
         return true;
     }
 
-    fn next() !?[]u8 {
+    fn nextToken() !?[]u8 {
         while (true) {
             while (pos < line.len and is_delimiter(line[pos])) : (pos += 1) {}
             if (pos >= line.len) {
@@ -71,6 +82,11 @@ const DebugScanner = struct {
             pos = end;
             return ret;
         }
+    }
+
+    fn nextInt(comptime Int: type) !?Int {
+        const token = try nextToken() orelse return null;
+        return try std.fmt.parseInt(Int, token, 10);
     }
 };
 
@@ -89,16 +105,36 @@ const OptimizedScanner = struct {
         input = input_buf[0..size];
     }
 
-    fn next() !?[]u8 {
-        while (pos < input.len and is_delimiter(input[pos])) : (pos += 1) {}
-        if (pos >= input.len) {
-            return null;
+    fn getChar() ?u8 {
+        defer pos += 1;
+        return input[pos];
+    }
+
+    fn nextInt(comptime Int: type) !?Int {
+        var result: Int = 0;
+        var ch = getChar() orelse return null;
+        var neg = false;
+        if (@typeInfo(Int).int.signedness == .signed) {
+            if (ch == '-') {
+                neg = true;
+                ch = getChar().?;
+            }
         }
-        var end = pos;
-        while (end < input.len and !is_delimiter(input[end])) : (end += 1) {}
-        const ret = input[pos..end];
-        pos = end;
-        return ret;
+        while (ch >= '0') {
+            result = result * 10 + @as(Int, @intCast(ch - '0'));
+            ch = getChar().?;
+        }
+        if (@typeInfo(Int).int.signedness == .signed) {
+            if (neg) result = -result;
+        }
+        return result;
+    }
+
+    fn nextToken() !?[]u8 {
+        const old_pos = pos;
+        while (input[pos] > ' ') pos += 1;
+        defer pos += 1;
+        return input[old_pos..pos];
     }
 };
 
@@ -107,7 +143,7 @@ const Scanner = switch (builtin.mode) {
     else => OptimizedScanner,
 };
 
-var stdout_buf: [1 << 21]u8 = undefined;
+var stdout_buf: [1 << 20]u8 = undefined;
 var stdout_writer = std.fs.File.stdout().writer(&stdout_buf);
 const stdout = &stdout_writer.interface;
 
@@ -123,45 +159,32 @@ fn ignoreError(value: anytype) ErrorUnionPayload(@TypeOf(value)) {
     return value catch unreachable;
 }
 
-fn tryReadInt(comptime T: type) !T {
-    const token = try Scanner.next() orelse return error.UnexpectedEof;
-    return std.fmt.parseInt(T, token, 10);
+fn readInt(comptime Int: type) Int {
+    return readIntOptional(Int).?;
 }
 
-fn tryReadIntOptional(comptime T: type) !?T {
-    const token = try Scanner.next() orelse return null;
-    return try std.fmt.parseInt(T, token, 10);
-}
-
-fn readInt(comptime T: type) T {
-    return ignoreError(tryReadInt(T));
-}
-
-fn readIntOptional(comptime T: type) ?T {
-    return ignoreError(tryReadIntOptional(T));
-}
-
-fn tryReadString() ![]u8 {
-    const token = try Scanner.next() orelse return error.UnexpectedEof;
-    return token;
-}
-
-fn tryReadStringOptional() !?[]u8 {
-    return try Scanner.next();
+fn readIntOptional(comptime Int: type) ?Int {
+    return ignoreError(Scanner.nextInt(Int));
 }
 
 fn readString() []u8 {
-    return ignoreError(tryReadString());
+    return readStringOptional().?;
 }
 
 fn readStringOptional() ?[]u8 {
-    return ignoreError(tryReadStringOptional());
+    return ignoreError(Scanner.nextToken());
 }
 
 fn readChar() u8 {
-    const token = readString();
-    std.debug.assert(token.len == 1);
-    return token[0];
+    if (Scanner == DebugScanner) {
+        const token = readString();
+        std.debug.assert(token.len == 1);
+        return token[0];
+    } else {
+        assert(Scanner == OptimizedScanner);
+        defer OptimizedScanner.pos += 1;
+        return OptimizedScanner.getChar().?;
+    }
 }
 
 fn print(comptime fmt: []const u8, args: anytype) void {
@@ -187,6 +210,10 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
         rp: u32 = 0,
         wp: u32 = 0,
 
+        pub fn clear(self: *Self) void {
+            self.rp = 0;
+            self.wp = 0;
+        }
         pub fn push(self: *Self, item: T) void {
             self.buf[self.wp] = item;
             self.wp += 1;
@@ -198,6 +225,52 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
             const rp = self.rp;
             self.rp = rp + 1;
             return self.buf[rp];
+        }
+    };
+}
+
+fn FixedDeque(comptime T: type, comptime front_cap: comptime_int, comptime back_cap: comptime_int) type {
+    return struct {
+        const Self = @This();
+        buf: [front_cap+back_cap]T = undefined,
+        head: u32 = front_cap,
+        tail: u32 = front_cap,
+
+        pub fn clear(self: *Self) void {
+            self.head = front_cap;
+            self.tail = front_cap;
+        }
+        pub fn len(self: *const Self) u32 {
+            return self.tail - self.head;
+        }
+        pub fn isEmpty(self: *const Self) bool {
+            return self.tail == self.head;
+        }
+        pub fn pushBack(self: *Self, item: T) void {
+            self.buf[self.tail] = item;
+            self.tail += 1;
+        }
+        pub fn pushFront(self: *Self, item: T) void {
+            self.head -= 1;
+            self.buf[self.head] = item;
+        }
+        pub fn popBack(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            self.tail -= 1;
+            return self.buf[self.tail];
+        }
+        pub fn popFront(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            defer self.head += 1;
+            return self.buf[self.head];
+        }
+        pub fn front(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.head];
+        }
+        pub fn back(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.tail - 1];
         }
     };
 }

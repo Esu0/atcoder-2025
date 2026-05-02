@@ -11,10 +11,11 @@ pub fn solve() !void {
     var max: i32 = -1;
     var ans: u32 = undefined;
     var set: std.StringHashMap(void) = .init(allocator);
+    try set.ensureTotalCapacity(n);
     for (0..n) |i| {
         const s = readString();
         const t = readInt(u31);
-        if (try set.fetchPut(s, {}) == null) {
+        if (set.fetchPutAssumeCapacity(s, {}) == null) {
             if (t > max) {
                 max = t;
                 ans = @intCast(i + 1);

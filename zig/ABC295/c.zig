@@ -8,14 +8,17 @@ const safety = false;
 
 pub fn solve() !void {
     const n = readInt(u32);
-    var set: std.AutoHashMap(u32, void) = .init(std.heap.smp_allocator);
+    var set: std.AutoHashMap(u32, u32) = .init(allocator);
+    try set.ensureTotalCapacity(n);
     var ans: u32 = 0;
     for (0..n) |_| {
         const a = readInt(u32);
-        const result = try set.getOrPut(a);
+        const result = set.getOrPutAssumeCapacity(a);
         if (result.found_existing) {
-            ans += 1;
-            set.removeByPtr(result.key_ptr);
+            ans += result.value_ptr.* % 2;
+            result.value_ptr.* += 1;
+        } else {
+            result.value_ptr.* = 1;
         }
     }
     print("{d}\n", .{ans});

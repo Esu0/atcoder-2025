@@ -10,12 +10,13 @@ pub fn solve() !void {
     const n = readInt(u32);
     const q = readInt(u32);
     var inds: std.AutoHashMap(u32, std.ArrayList(u32)) = .init(allocator);
+    try inds.ensureTotalCapacity(n);
     var i: u32 = 1;
     while (i <= n) : (i += 1) {
         const a = readInt(u32);
-        const result = try inds.getOrPut(a);
+        const result = inds.getOrPutAssumeCapacity(a);
         if (!result.found_existing) {
-            result.value_ptr.* = try .initCapacity(allocator, 1);
+            result.value_ptr.* = try .initCapacity(allocator, 10);
         }
         try result.value_ptr.*.append(allocator, i);
     }

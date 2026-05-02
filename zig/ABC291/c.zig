@@ -11,9 +11,10 @@ pub fn solve() !void {
     const s = readString();
     assert(s.len == n);
     var set: std.AutoHashMap(struct {i32, i32}, void) = .init(allocator);
+    try set.ensureTotalCapacity(n+1);
     var x: i32 = 0;
     var y: i32 = 0;
-    try set.putNoClobber(.{0, 0}, {});
+    set.putAssumeCapacityNoClobber(.{0, 0}, {});
     for (s) |si| {
         switch(si) {
             'L' => x -= 1,
@@ -22,7 +23,7 @@ pub fn solve() !void {
             'D' => y -= 1,
             else => unreachable,
         }
-        const result = try set.getOrPut(.{ x, y });
+        const result = set.getOrPutAssumeCapacity(.{ x, y });
         if (result.found_existing) {
             try stdout.writeAll("Yes\n");
             return;

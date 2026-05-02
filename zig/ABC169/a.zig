@@ -7,16 +7,7 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    var map: std.AutoHashMap(u32, i32) = .init(allocator);
-    const n = readInt(u32);
-    try map.ensureTotalCapacity(n);
-    var i: u31 = 1;
-    while (i <= n) : (i += 1) {
-        const a = readInt(u32);
-        print("{d} ", .{map.get(a) orelse -1});
-        map.putAssumeCapacity(a, i);
-    }
-    try stdout.writeByte('\n');
+    print("{d}\n", .{readInt(u32) * readInt(u32)});
 }
 
 const builtin = @import("builtin");
@@ -107,7 +98,7 @@ const Scanner = switch (builtin.mode) {
     else => OptimizedScanner,
 };
 
-var stdout_buf: [1 << 21]u8 = undefined;
+var stdout_buf: [1 << 20]u8 = undefined;
 var stdout_writer = std.fs.File.stdout().writer(&stdout_buf);
 const stdout = &stdout_writer.interface;
 
@@ -187,6 +178,10 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
         rp: u32 = 0,
         wp: u32 = 0,
 
+        pub fn clear(self: *Self) void {
+            self.rp = 0;
+            self.wp = 0;
+        }
         pub fn push(self: *Self, item: T) void {
             self.buf[self.wp] = item;
             self.wp += 1;
@@ -198,6 +193,52 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
             const rp = self.rp;
             self.rp = rp + 1;
             return self.buf[rp];
+        }
+    };
+}
+
+fn FixedDeque(comptime T: type, comptime front_cap: comptime_int, comptime back_cap: comptime_int) type {
+    return struct {
+        const Self = @This();
+        buf: [front_cap+back_cap]T = undefined,
+        head: u32 = front_cap,
+        tail: u32 = front_cap,
+
+        pub fn clear(self: *Self) void {
+            self.head = front_cap;
+            self.tail = front_cap;
+        }
+        pub fn len(self: *const Self) u32 {
+            return self.tail - self.head;
+        }
+        pub fn isEmpty(self: *const Self) bool {
+            return self.tail == self.head;
+        }
+        pub fn pushBack(self: *Self, item: T) void {
+            self.buf[self.tail] = item;
+            self.tail += 1;
+        }
+        pub fn pushFront(self: *Self, item: T) void {
+            self.head -= 1;
+            self.buf[self.head] = item;
+        }
+        pub fn popBack(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            self.tail -= 1;
+            return self.buf[self.tail];
+        }
+        pub fn popFront(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            defer self.head += 1;
+            return self.buf[self.head];
+        }
+        pub fn front(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.head];
+        }
+        pub fn back(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.tail - 1];
         }
     };
 }
@@ -257,7 +298,7 @@ const Unionfind = struct {
 
     pub fn clear(self: Self) void {
         @memset(self.size, 1);
-        @memset(self.parent, std.math.maxInt(usize));
+        @memset(self.parent, std.math.maxInt(u32));
     }
 };
 

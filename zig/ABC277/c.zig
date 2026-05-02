@@ -9,6 +9,7 @@ const safety = false;
 pub fn solve() !void {
     const n = readInt(u32);
     var atoi: std.AutoHashMap(u32, u32) = .init(allocator);
+    try atoi.ensureTotalCapacity(n+n+1);
     var itoa: std.ArrayList(u32) = try .initCapacity(allocator, n * 2 + 1);
     try atoi.putNoClobber(1, 0);
     itoa.appendAssumeCapacity(1);
@@ -20,7 +21,7 @@ pub fn solve() !void {
         var ida: u32 = undefined;
         var idb: u32 = undefined;
         {
-            const result = try atoi.getOrPut(a);
+            const result = atoi.getOrPutAssumeCapacity(a);
             if (result.found_existing) ida = result.value_ptr.* else {
                 ida = @intCast(itoa.items.len);
                 result.value_ptr.* = ida;
@@ -28,7 +29,7 @@ pub fn solve() !void {
             }
         }
         {
-            const result = try atoi.getOrPut(b);
+            const result = atoi.getOrPutAssumeCapacity(b);
             if (result.found_existing) idb = result.value_ptr.* else {
                 idb = @intCast(itoa.items.len);
                 result.value_ptr.* = idb;

@@ -22,6 +22,7 @@ pub fn solve() !void {
     const b = try allocator.alloc(u32, bcnt);
     for (0..b.len) |i| b[i] = readInt(u32);
     var set: std.AutoHashMap(struct {u32, u32}, u32) = .init(allocator);
+    try set.ensureTotalCapacity(n);
     for (pq[0..n]) |pqi| {
         const pi, const qi = pqi;
         const c = std.sort.upperBound(u32, a, pi, compare);

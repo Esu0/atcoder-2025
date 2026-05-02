@@ -10,16 +10,27 @@ pub fn solve() !void {
     const n = readInt(u32);
     const k = readInt(u32);
     var set: std.AutoHashMap(u32, u32) = .init(allocator);
+    try set.ensureTotalCapacity(n);
     var queue: FixedQueue(u32, 3<<17) = .{};
     for (0..k - 1) |_| {
         const c = readInt(u32);
         queue.push(c);
-        (try set.getOrPutValue(c, 0)).value_ptr.* += 1;
+        const result = set.getOrPutAssumeCapacity(c);
+        if (result.found_existing) {
+            result.value_ptr.* += 1;
+        } else {
+            result.value_ptr.* = 1;
+        }
     }
     var ans: u32 = 0;
     for (k - 1..n) |_| {
         const c = readInt(u32);
-        (try set.getOrPutValue(c, 0)).value_ptr.* += 1;
+        const res = set.getOrPutAssumeCapacity(c);
+        if (res.found_existing) {
+            res.value_ptr.* += 1;
+        } else {
+            res.value_ptr.* = 1;
+        }
         queue.push(c);
         ans = @max(ans, set.count());
         const d = queue.pop().?;

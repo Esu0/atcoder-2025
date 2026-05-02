@@ -9,9 +9,10 @@ const safety = false;
 pub fn solve() !void {
     const n = readInt(u32);
     var cnt: std.StringHashMap(u32) = .init(allocator);
+    try cnt.ensureTotalCapacity(n);
     for (0..n) |_| {
         const s = readString();
-        const result = try cnt.getOrPut(s);
+        const result = cnt.getOrPutAssumeCapacity(s);
         if (!result.found_existing) {
             result.value_ptr.* = 0;
             print("{s}\n", .{s});

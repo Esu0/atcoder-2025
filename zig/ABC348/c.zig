@@ -9,10 +9,11 @@ const safety = false;
 pub fn solve() !void {
     const n = readInt(u32);
     var map: std.AutoHashMap(u32, u32) = .init(allocator);
+    try map.ensureTotalCapacity(n);
     for (0..n) |_| {
         const a = readInt(u32);
         const c = readInt(u32);
-        const result = try map.getOrPut(c);
+        const result = map.getOrPutAssumeCapacity(c);
         if (result.found_existing) {
             result.value_ptr.* = @min(result.value_ptr.*, a);
         } else {

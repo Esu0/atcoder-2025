@@ -9,6 +9,7 @@ pub fn solve() !void {
     _ = readInt(u32);
     const m = readInt(u32);
     var set: std.AutoHashMap(struct {u32, u32}, void) = .init(allocator);
+    try set.ensureTotalCapacity(m);
     var ans: u32 = 0;
     for (0..m) |_| {
         var u = readInt(u32);
@@ -17,7 +18,7 @@ pub fn solve() !void {
             ans += 1;
         } else {
             if (u > v) mem.swap(u32, &u, &v);
-            ans += @intFromBool(try set.fetchPut(.{ u, v }, {}) != null);
+            ans += @intFromBool(set.fetchPutAssumeCapacity(.{ u, v }, {}) != null);
         }
     }
     print("{d}\n", .{ans});

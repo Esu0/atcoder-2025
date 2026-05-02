@@ -9,13 +9,14 @@ const safety = false;
 pub fn solve() !void {
     const n = readInt(u32);
     var set: std.StringHashMap(void) = .init(allocator);
+    try set.ensureTotalCapacity(n);
     var not: std.ArrayList([]u8) = try .initCapacity(allocator, n);
     for (0..n) |_| {
         const s = readString();
         if (s[0] == '!') {
             not.appendAssumeCapacity(s[1..]);
         } else {
-            try set.put(s, {});
+            set.putAssumeCapacity(s, {});
         }
     }
     for (not.items) |s| {

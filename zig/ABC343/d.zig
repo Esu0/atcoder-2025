@@ -10,7 +10,8 @@ pub fn solve() !void {
     const n = readInt(u32);
     const t = readInt(u32);
     var map: std.AutoHashMap(u64, u32) = .init(allocator);
-    try map.put(0, n);
+    try map.ensureTotalCapacity(t + 1);
+    map.putAssumeCapacity(0, n);
     var score: [2<<17]u64 = @splat(0);
     for (0..t) |_| {
         const a = readInt(u32);

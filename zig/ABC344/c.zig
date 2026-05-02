@@ -17,10 +17,11 @@ pub fn solve() !void {
     var c: [100]u32 = undefined;
     for (0..l) |i| c[i] = readInt(u32);
     var set: std.AutoHashMap(u32, void) = .init(allocator);
+    try set.ensureTotalCapacity(n*m*l);
     for (0..n) |i| {
         for (0..m) |j| {
             for (0..l) |k| {
-                try set.put(a[i] + b[j] + c[k], {});
+                set.putAssumeCapacity(a[i] + b[j] + c[k], {});
             }
         }
     }

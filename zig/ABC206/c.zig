@@ -9,10 +9,11 @@ const safety = false;
 pub fn solve() !void {
     const n = readInt(u32);
     var set: std.AutoHashMap(u32, u32) = .init(allocator);
+    try set.ensureTotalCapacity(n);
     var ans: u64 = @as(u64, n) * (n - 1) / 2;
     for (0..n) |_| {
         const a = readInt(u32);
-        const result = try set.getOrPut(a);
+        const result = set.getOrPutAssumeCapacity(a);
         if (result.found_existing) {
             ans -= result.value_ptr.*;
             result.value_ptr.* += 1;

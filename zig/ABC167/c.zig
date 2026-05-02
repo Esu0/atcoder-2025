@@ -7,16 +7,34 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    var map: std.AutoHashMap(u32, i32) = .init(allocator);
-    const n = readInt(u32);
-    try map.ensureTotalCapacity(n);
-    var i: u31 = 1;
-    while (i <= n) : (i += 1) {
-        const a = readInt(u32);
-        print("{d} ", .{map.get(a) orelse -1});
-        map.putAssumeCapacity(a, i);
+    const n = readInt(u5);
+    const m = readInt(u32);
+    const x = readInt(u32);
+    var c: [12]u32 = undefined;
+    var a: [12][12]u32 = undefined;
+    for (0..n) |i| {
+        c[i] = readInt(u32);
+        for (0..m) |j| a[i][j] = readInt(u32);
     }
-    try stdout.writeByte('\n');
+
+    var s: u32 = 0;
+    var ans: u32 = math.maxInt(u32);
+    next: while (s < @as(u32, 1) << n) : (s += 1) {
+        var sum: [12]u32 = @splat(0);
+        var i: u5 = 0;
+        var cost: u32 = 0;
+        while (i < n) : (i += 1) {
+            if ((s >> i) & 1 != 0) {
+                for (0..m) |j| sum[j] += a[i][j];
+                cost += c[i];
+            }
+        }
+        for (sum[0..m]) |si| {
+            if (si < x) continue :next;
+        }
+        ans = @min(ans, cost);
+    }
+    print("{d}\n", .{@as(i32, @bitCast(ans))});
 }
 
 const builtin = @import("builtin");
@@ -107,7 +125,7 @@ const Scanner = switch (builtin.mode) {
     else => OptimizedScanner,
 };
 
-var stdout_buf: [1 << 21]u8 = undefined;
+var stdout_buf: [1 << 20]u8 = undefined;
 var stdout_writer = std.fs.File.stdout().writer(&stdout_buf);
 const stdout = &stdout_writer.interface;
 
@@ -187,6 +205,10 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
         rp: u32 = 0,
         wp: u32 = 0,
 
+        pub fn clear(self: *Self) void {
+            self.rp = 0;
+            self.wp = 0;
+        }
         pub fn push(self: *Self, item: T) void {
             self.buf[self.wp] = item;
             self.wp += 1;
@@ -198,6 +220,52 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
             const rp = self.rp;
             self.rp = rp + 1;
             return self.buf[rp];
+        }
+    };
+}
+
+fn FixedDeque(comptime T: type, comptime front_cap: comptime_int, comptime back_cap: comptime_int) type {
+    return struct {
+        const Self = @This();
+        buf: [front_cap+back_cap]T = undefined,
+        head: u32 = front_cap,
+        tail: u32 = front_cap,
+
+        pub fn clear(self: *Self) void {
+            self.head = front_cap;
+            self.tail = front_cap;
+        }
+        pub fn len(self: *const Self) u32 {
+            return self.tail - self.head;
+        }
+        pub fn isEmpty(self: *const Self) bool {
+            return self.tail == self.head;
+        }
+        pub fn pushBack(self: *Self, item: T) void {
+            self.buf[self.tail] = item;
+            self.tail += 1;
+        }
+        pub fn pushFront(self: *Self, item: T) void {
+            self.head -= 1;
+            self.buf[self.head] = item;
+        }
+        pub fn popBack(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            self.tail -= 1;
+            return self.buf[self.tail];
+        }
+        pub fn popFront(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            defer self.head += 1;
+            return self.buf[self.head];
+        }
+        pub fn front(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.head];
+        }
+        pub fn back(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.tail - 1];
         }
     };
 }
@@ -257,7 +325,7 @@ const Unionfind = struct {
 
     pub fn clear(self: Self) void {
         @memset(self.size, 1);
-        @memset(self.parent, std.math.maxInt(usize));
+        @memset(self.parent, std.math.maxInt(u32));
     }
 };
 

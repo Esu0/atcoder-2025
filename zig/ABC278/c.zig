@@ -10,13 +10,14 @@ pub fn solve() !void {
     const n = readInt(u32);
     const q = readInt(u32);
     var set: std.AutoHashMap(struct {u32, u32}, void) = .init(allocator);
+    try set.ensureTotalCapacity(q);
     for (0..q) |_| {
         const t = readInt(u4);
         const a = readInt(u32);
         const b = readInt(u32);
         assert(1 <= a and a <= n and 1 <= b and b <= n);
         if (t == 1) {
-            try set.put(.{ a, b }, {});
+            set.putAssumeCapacity(.{ a, b }, {});
         } else if (t == 2) {
             _ = set.remove(.{a, b});
         } else {

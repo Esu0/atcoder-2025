@@ -16,10 +16,11 @@ pub fn solve() !void {
     var px: i32 = 0;
     var py: i32 = 0;
     var items: std.AutoHashMap(struct {i32, i32}, void) = .init(allocator);
+    try items.ensureTotalCapacity(m);
     for (0..m) |_| {
         const x = readInt(i32);
         const y = readInt(i32);
-        try items.putNoClobber(.{x, y}, {});
+        items.putAssumeCapacityNoClobber(.{x, y}, {});
     }
     for (s) |si| {
         if (h == 0) {

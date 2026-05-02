@@ -10,9 +10,10 @@ pub fn solve() !void {
     const n = readInt(u32);
     const x = readInt(i32);
     var set: std.AutoHashMap(i32, void) = .init(allocator);
+    try set.ensureTotalCapacity(n);
     for (0..n) |_| {
         const a = readInt(i32);
-        try set.put(a, {});
+        set.putAssumeCapacity(a, {});
     }
     var iter = set.keyIterator();
     while (iter.next()) |a| {

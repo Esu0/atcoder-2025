@@ -9,11 +9,12 @@ const safety = false;
 pub fn solve() !void {
     const n = readInt(u64);
     var set: std.AutoHashMap(u64, void) = .init(allocator);
+    try set.ensureTotalCapacity(102230);
     var i: u64 = 2;
     while (i * i <= n) : (i += 1) {
         var m = i * i;
         while (m <= n) : (m *= i) {
-            try set.put(m, {});
+            set.putAssumeCapacity(m, {});
         }
     }
     print("{d}\n", .{n - set.count()});

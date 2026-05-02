@@ -10,6 +10,7 @@ pub fn solve() !void {
     const n = readInt(u32);
     const m = readInt(u32);
     var map: std.AutoHashMap(struct {i32, i32}, void) = .init(allocator);
+    try map.ensureTotalCapacity(m*9);
     const dxy = [8]struct {comptime_int, comptime_int}{
         .{1, 2},
         .{1, -2},
@@ -28,10 +29,10 @@ pub fn solve() !void {
             const na = a + dx;
             const nb = b + dy;
             if (1 <= na and na <= n and 1 <= nb and nb <= n) {
-                try map.put(.{na, nb}, {});
+                map.putAssumeCapacity(.{na, nb}, {});
             }
         }
-        try map.put(.{a, b}, {});
+        map.putAssumeCapacity(.{a, b}, {});
     }
     const ans = @as(u64, n) * n - map.count();
     print("{d}\n", .{ans});
