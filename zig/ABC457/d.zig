@@ -8,7 +8,26 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const k = readInt(u64);
+    var a: [2<<17]u64 = undefined;
+    for (1..n+1) |i| a[i] = readInt(u64);
+    var ok: u64 = 1;
+    var ng: u64 = math.maxInt(u64) / 2;
+    next: while (ng - ok > 1) {
+        const m = ok + (ng - ok) / 2;
+        var i: u32 = 1;
+        var cnt: u64 = 0;
+        while (i <= n) : (i += 1) {
+            cnt += try math.divCeil(u64, (m -| a[i]), i);
+            if (cnt > k) {
+                ng = m;
+                continue :next;
+            }
+        }
+        ok = m;
+    }
+    print("{d}\n", .{ok});
 }
 
 };

@@ -6,9 +6,37 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 const global = struct {
+const MInt = ModInt(998244353);
+
+var n: u32 = undefined;
+var g: [2<<17]std.ArrayList(u32) = undefined;
+var dp: [2<<17]?MInt = undefined;
+fn dfs(u: u32) MInt {
+    if (u == n - 1) return .one;
+    if (dp[u]) |v| return v;
+    var c: MInt = .zero;
+    for (g[u].items) |v| {
+        c = c.add(dfs(v));
+    }
+    dp[u] = c;
+    return c;
+}
 
 pub fn solve() !void {
-
+    const t = readInt(u32);
+    for (0..t) |_| {
+        n = readInt(u32);
+        const m = readInt(u32);
+        for (0..n) |i| g[i] = .initBuffer(&.{});
+        for (0..m) |_| {
+            const u = readInt(u32) - 1;
+            const v = readInt(u32) - 1;
+            try g[u].append(allocator, v);
+        }
+        @memset(dp[0..n], null);
+        const ans = dfs(0);
+        print("{d}\n", .{ans.value});
+    }
 }
 
 };

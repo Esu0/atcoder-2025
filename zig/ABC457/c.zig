@@ -8,7 +8,24 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
+    const n = readInt(u32);
+    var k = readInt(u64);
+    var a: [2<<17][]u32 = undefined;
+    for (0..n) |i| {
+        const l = readInt(u32);
+        a[i] = try allocator.alloc(u32, l);
+        for (0..l) |j| a[i][j] = readInt(u32);
+    }
 
+    for (0..n) |i| {
+        const c = readInt(u32);
+        const len = @as(u64, a[i].len) * c;
+        if (k <= len) {
+            print("{d}\n", .{a[i][(k - 1) % a[i].len]});
+            return;
+        }
+        k -= len;
+    }
 }
 
 };

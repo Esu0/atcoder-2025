@@ -8,7 +8,16 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const a = try allocator.alloc([]u16, n);
+    for (0..n) |i| {
+        const l = readInt(u32);
+        a[i] = try allocator.alloc(u16, l);
+        for (0..l) |j| a[i][j] = readInt(u16);
+    }
+    const x = readInt(u32) - 1;
+    const y = readInt(u32) - 1;
+    print("{d}\n", .{a[x][y]});
 }
 
 };

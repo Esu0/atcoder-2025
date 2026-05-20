@@ -5,13 +5,29 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-const global = struct {
+const MInt = ModInt(998244353);
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const m = readInt(u32);
+    const dp = try allocator.alloc(MInt, n * m);
+    const cnt = try allocator.alloc(u32, n * m);
+    @memset(dp, .one);
+    for (0..n) |_| {
+        @memset(cnt, 0);
+        for (0..m) |_| {
+            const a = readInt(u32) - 1;
+            cnt[a] += 1;
+        }
+        for (0..n*m) |i| {
+            dp[i] = dp[i].mul(.init(m - cnt[i]));
+        }
+    }
+    var ans = MInt.init(m).pow(n).mul(.init(n * m));
+    for (dp) |dpi| ans = ans.sub(dpi);
+    print("{d}\n", .{ans.value});
 }
 
-};
 const builtin = @import("builtin");
 
 var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -176,11 +192,11 @@ fn print(comptime fmt: []const u8, args: anytype) void {
 pub fn main() !void {
     if (safety) {
         try Scanner.init();
-        try global.solve();
+        try solve();
         try stdout.flush();
     } else {
         Scanner.init() catch unreachable;
-        global.solve() catch unreachable;
+        solve() catch unreachable;
         stdout.flush() catch unreachable;
     }
 }
