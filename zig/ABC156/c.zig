@@ -7,17 +7,17 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    var x = readInt(u64);
-    const y = readInt(u64);
-    const a = readInt(u32);
-    const b = readInt(u32);
-
-    var ans: u64 = 0;
-    var cnt: u32 = 0;
-    while (x < y) {
-        ans = @max(cnt + try math.divCeil(u64, y - x, b) - 1, ans);
-        cnt += 1;
-        x *|= a;
+    const n = readInt(u32);
+    var x: [100]u8 = undefined;
+    for (0..n) |i| x[i] = readInt(u8);
+    var ans: i32 = math.maxInt(i32);
+    var i: i32 = 0;
+    while (i <= 101) : (i += 1) {
+        var sum: i32 = 0;
+        for (x[0..n]) |xi| {
+            sum += (xi - i) * (xi - i);
+        }
+        ans = @min(ans, sum);
     }
     print("{d}\n", .{ans});
 }

@@ -6,20 +6,16 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
-pub fn solve() !void {
-    var x = readInt(u64);
-    const y = readInt(u64);
-    const a = readInt(u32);
-    const b = readInt(u32);
-
-    var ans: u64 = 0;
-    var cnt: u32 = 0;
-    while (x < y) {
-        ans = @max(cnt + try math.divCeil(u64, y - x, b) - 1, ans);
-        cnt += 1;
-        x *|= a;
+fn isPalindrome(s: []const u8) bool {
+    for (0..s.len / 2) |i| {
+        if (s[i] != s[s.len - i - 1]) return false;
     }
-    print("{d}\n", .{ans});
+    return true;
+}
+
+pub fn solve() !void {
+    const s = readString();
+    try stdout.writeAll(if (isPalindrome(s) and isPalindrome(s[0..(s.len - 1) / 2])) "Yes\n" else "No\n");
 }
 
 const builtin = @import("builtin");

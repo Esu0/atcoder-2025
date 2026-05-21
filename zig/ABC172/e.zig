@@ -5,21 +5,26 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
+const MInt = ModInt(1000000007);
 
 pub fn solve() !void {
-    var x = readInt(u64);
-    const y = readInt(u64);
-    const a = readInt(u32);
-    const b = readInt(u32);
-
-    var ans: u64 = 0;
-    var cnt: u32 = 0;
-    while (x < y) {
-        ans = @max(cnt + try math.divCeil(u64, y - x, b) - 1, ans);
-        cnt += 1;
-        x *|= a;
+    const n = readInt(u32);
+    const m = readInt(u32);
+    const k = m - n;
+    // const C = try MInt.Combination.init(m, allocator);
+    var a2: MInt = .one;
+    var a1: MInt = .fromRaw(@intCast(k));
+    var i: u32 = 1;
+    while (i < n) : (i += 1) {
+        const a = a1.mul(.fromRaw(@intCast(i + k))).add(a2.mul(.fromRaw(@intCast(i))));
+        a2 = a1;
+        a1 = a;
     }
-    print("{d}\n", .{ans});
+    i = m;
+    while (i > k) : (i -= 1) {
+        a1 = a1.mul(.fromRaw(@intCast(i)));
+    }
+    print("{d}\n", .{a1.value});
 }
 
 const builtin = @import("builtin");

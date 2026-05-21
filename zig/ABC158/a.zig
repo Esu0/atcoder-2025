@@ -7,19 +7,8 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    var x = readInt(u64);
-    const y = readInt(u64);
-    const a = readInt(u32);
-    const b = readInt(u32);
-
-    var ans: u64 = 0;
-    var cnt: u32 = 0;
-    while (x < y) {
-        ans = @max(cnt + try math.divCeil(u64, y - x, b) - 1, ans);
-        cnt += 1;
-        x *|= a;
-    }
-    print("{d}\n", .{ans});
+    const s = readString();
+    try stdout.writeAll(if (mem.eql(u8, s, "AAA") or mem.eql(u8, s, "BBB")) "No\n" else "Yes\n");
 }
 
 const builtin = @import("builtin");

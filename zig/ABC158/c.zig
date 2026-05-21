@@ -7,19 +7,16 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 pub fn solve() !void {
-    var x = readInt(u64);
-    const y = readInt(u64);
     const a = readInt(u32);
     const b = readInt(u32);
-
-    var ans: u64 = 0;
-    var cnt: u32 = 0;
-    while (x < y) {
-        ans = @max(cnt + try math.divCeil(u64, y - x, b) - 1, ans);
-        cnt += 1;
-        x *|= a;
+    var i: u32 = 1;
+    while (i <= 2000) : (i += 1) {
+        if (i * 8 / 100 == a and i * 10 / 100 == b) {
+            print("{d}\n", .{i});
+            return;
+        }
     }
-    print("{d}\n", .{ans});
+    print("-1\n", .{});
 }
 
 const builtin = @import("builtin");
