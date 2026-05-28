@@ -7,9 +7,22 @@ const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
 const global = struct {
+const MInt = ModInt(1000000007);
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const k = readInt(u32);
+    var a: [1<<17]i32 = undefined;
+    for (0..n) |i| a[i] = readInt(i32);
+    mem.sortUnstable(i32, a[0..n], {}, std.sort.asc(i32));
+    const C = try MInt.Combination.init(n, allocator);
+    var ans: MInt = .zero;
+    var i: u32 = 0;
+    while (i < n) : (i += 1) {
+        ans = MInt.init(a[i]).mul(C.combi(i, k - 1)).add(ans);
+        ans = ans.sub(MInt.init(a[i]).mul(C.combi(n - i - 1, k - 1)));
+    }
+    print("{d}\n", .{ans.value});
 }
 
 };

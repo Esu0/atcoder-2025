@@ -9,7 +9,17 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    var set: std.AutoHashMap(u32, void) = .init(allocator);
+    try set.ensureTotalCapacity(n);
+    for (0..n) |_| {
+        const a = readInt(u32);
+        if (set.fetchPutAssumeCapacity(a, {}) != null) {
+            print("NO\n", .{});
+            return;
+        }
+    }
+    print("YES\n", .{});
 }
 
 };

@@ -9,7 +9,23 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const k = readInt(u32);
+    var p: [2<<17]u16 = undefined;
+    var i: u32 = 0;
+    var sum: u32 = 0;
+    while (i < k - 1) : (i += 1) {
+        p[i] = readInt(u16);
+        sum += p[i];
+    }
+    var max: u32 = 0;
+    while (i < n) : (i += 1) {
+        p[i] = readInt(u16);
+        sum += p[i];
+        max = @max(max, sum);
+        sum -= p[i + 1 - k];
+    }
+    print("{d:.15}\n", .{@as(f64, @floatFromInt(max + k)) / 2});
 }
 
 };

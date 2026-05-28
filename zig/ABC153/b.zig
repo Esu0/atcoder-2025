@@ -9,7 +9,11 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const h = readInt(u32);
+    const n = readInt(u32);
+    var sum: u32 = 0;
+    for (0..n) |_| sum += readInt(u32);
+    try stdout.writeAll(if (sum >= h) "Yes\n" else "No\n");
 }
 
 };

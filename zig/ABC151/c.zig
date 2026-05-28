@@ -9,7 +9,25 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const m = readInt(u32);
+    var pe: u32 = 0;
+    var a: u32 = 0;
+    var ac: [1<<17]bool = @splat(false);
+    var wa: [1<<17]u32 = @splat(0);
+    for (0..m) |_| {
+        const p = readInt(u32);
+        assert(p <= n);
+        const s = readString();
+        if (s[0] == 'A' and ac[p] == false) {
+            ac[p] = true;
+            a += 1;
+            pe += wa[p];
+        } else {
+            wa[p] += 1;
+        }
+    }
+    print("{d} {d}\n", .{a, pe});
 }
 
 };

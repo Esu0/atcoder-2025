@@ -5,15 +5,37 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    var map: std.StringHashMap(u32) = .init(allocator);
+    try map.ensureTotalCapacity(n);
+    for (0..n) |_| {
+        const s = readString();
+        const result = map.getOrPutAssumeCapacity(s);
+        if (!result.found_existing) result.value_ptr.* = 0;
+        result.value_ptr.* += 1;
+    }
+    var max_cnt: u32 = 0;
+    var value_iter = map.valueIterator();
+    while (value_iter.next()) |v| {
+        max_cnt = @max(v.*, max_cnt);
+    }
+    var ans: std.ArrayList([]const u8) = try .initCapacity(allocator, n);
+    var iter = map.iterator();
+    while (iter.next()) |kv| {
+        if (kv.value_ptr.* == max_cnt) ans.appendAssumeCapacity(kv.key_ptr.*);
+    }
+    mem.sortUnstable([]const u8, ans.items, {}, struct {fn lessThan(_: void, lhs: []const u8, rhs: []const u8) bool {
+        return mem.order(u8, lhs, rhs) == .lt;
+    }}.lessThan);
+    for (ans.items) |str| {
+        print("{s}\n", .{str});
+    }
 }
 
 };
-
 const builtin = @import("builtin");
 
 var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

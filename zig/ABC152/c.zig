@@ -9,7 +9,15 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    var ans: u32 = 0;
+    var min: u32 = math.maxInt(u32);
+    for (0..n) |_| {
+        const p = readInt(u32);
+        min = @min(min, p);
+        if (p <= min) ans += 1;
+    }
+    print("{d}\n", .{ans});
 }
 
 };

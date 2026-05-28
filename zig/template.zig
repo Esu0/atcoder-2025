@@ -6,9 +6,13 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 
+const global = struct {
+
 pub fn solve() !void {
-    
+
 }
+
+};
 
 const builtin = @import("builtin");
 
@@ -162,11 +166,11 @@ fn print(comptime fmt: []const u8, args: anytype) void {
 pub fn main() !void {
     if (safety) {
         try Scanner.init();
-        try solve();
+        try global.solve();
         try stdout.flush();
     } else {
         Scanner.init() catch unreachable;
-        solve() catch unreachable;
+        global.solve() catch unreachable;
         stdout.flush() catch unreachable;
     }
 }

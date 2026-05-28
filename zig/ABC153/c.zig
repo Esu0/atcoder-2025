@@ -9,7 +9,14 @@ const safety = false;
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const k = readInt(u32);
+    var h: [2<<17]u32 = undefined;
+    for (0..n) |i| h[i] = readInt(u32);
+    mem.sortUnstable(u32, h[0..n], {}, std.sort.asc(u32));
+    var ans: u64 = 0;
+    for (0..n -| k) |i| ans += h[i];
+    print("{d}\n", .{ans});
 }
 
 };
