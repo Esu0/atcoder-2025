@@ -98,6 +98,7 @@ dependencies = [
 name = "abc432"
 version = "0.1.0"
 dependencies = [
+ "ac-library-rs",
  "proconio",
 ]
 
@@ -226,6 +227,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "abc459"
+version = "0.1.0"
+dependencies = [
+ "proconio",
+]
+
+[[package]]
+name = "abc462"
+version = "0.1.0"
+dependencies = [
+ "proconio",
+]
+
+[[package]]
 name = "ac-library-rs"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -303,6 +318,13 @@ dependencies = [
 
 [[package]]
 name = "awc0003"
+version = "0.1.0"
+dependencies = [
+ "proconio",
+]
+
+[[package]]
+name = "awc0013"
 version = "0.1.0"
 dependencies = [
  "proconio",
