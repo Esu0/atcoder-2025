@@ -2,15 +2,22 @@ const std = @import("std");
 const assert = std.debug.assert;
 const mem = std.mem;
 const math = std.math;
+const sort = std.sort;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-const skip_delim = false;
 
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const k = readInt(u32);
+    var h: [2<<17]u32 = undefined;
+    for (0..n) |i| h[i] = readInt(u32);
+    mem.sortUnstable(u32, h[0..n], {}, sort.desc(u32));
+    var ans: u64 = 0;
+    for (k..n) |i| ans += h[i];
+    print("{d}\n", .{ans + k});
 }
 
 };
@@ -96,9 +103,6 @@ const OptimizedScanner = struct {
     }
 
     fn nextInt(comptime Int: type) !?Int {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
         var result: Int = 0;
         var ch = getChar() orelse return null;
         var neg = false;
@@ -119,9 +123,6 @@ const OptimizedScanner = struct {
     }
 
     fn nextToken() !?[]u8 {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
         const old_pos = pos;
         while (input[pos] > ' ') pos += 1;
         defer pos += 1;

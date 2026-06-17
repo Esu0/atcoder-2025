@@ -5,12 +5,24 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-const skip_delim = false;
 
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const m = readInt(u32);
+    var map: std.AutoHashMap(struct {u32, u32}, void) = .init(allocator);
+    try map.ensureTotalCapacity(m);
+    var ans: u32 = 0;
+    for (0..m) |_| {
+        var a = readInt(u32);
+        var b = readInt(u32);
+        if (a > b) mem.swap(u32, &a, &b);
+        const res = map.getOrPutAssumeCapacity(.{a, b});
+        if (res.found_existing) ans += 1;
+    }
+    _ = n;
+    print("{d}\n", .{ans});
 }
 
 };
@@ -96,9 +108,7 @@ const OptimizedScanner = struct {
     }
 
     fn nextInt(comptime Int: type) !?Int {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
+        while (input[pos] <= ' ') pos += 1;
         var result: Int = 0;
         var ch = getChar() orelse return null;
         var neg = false;
@@ -119,9 +129,7 @@ const OptimizedScanner = struct {
     }
 
     fn nextToken() !?[]u8 {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
+        while (input[pos] <= ' ') pos += 1;
         const old_pos = pos;
         while (input[pos] > ' ') pos += 1;
         defer pos += 1;

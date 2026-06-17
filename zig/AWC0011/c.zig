@@ -4,13 +4,32 @@ const mem = std.mem;
 const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
-const safety = false;
-const skip_delim = false;
+const safety = true;
 
 const global = struct {
 
 pub fn solve() !void {
+    // @setRuntimeSafety(true);
+    const n = readInt(u32);
+    const k = readInt(u64);
+    // if (k > 1_000_000_000_000_000_000) @panic("");
+    var o: u64 = 0;
+    var cnt: u32 = 0;
+    for (0..n) |_| {
+        const a = readInt(u64);
+        // if (a > 1_000_000_000_000_000_000) @panic("");
+        if (~k & a == 0) {
+            cnt += 1;
+            o |= a;
+        }
+        // std.debug.print("o: {d}\n", .{o});
+    }
 
+    if (o != k or cnt == 0) {
+        print("-1\n", .{});
+    } else {
+        print("{d}\n", .{cnt});
+    }
 }
 
 };
@@ -96,9 +115,6 @@ const OptimizedScanner = struct {
     }
 
     fn nextInt(comptime Int: type) !?Int {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
         var result: Int = 0;
         var ch = getChar() orelse return null;
         var neg = false;
@@ -119,9 +135,6 @@ const OptimizedScanner = struct {
     }
 
     fn nextToken() !?[]u8 {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
         const old_pos = pos;
         while (input[pos] > ' ') pos += 1;
         defer pos += 1;

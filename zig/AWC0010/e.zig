@@ -5,12 +5,101 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-const skip_delim = false;
 
 const global = struct {
 
-pub fn solve() !void {
+var n: u8 = undefined;
+var c: [8][8]u32 = undefined;
+var rev: std.AutoHashMap([8]u8, u32) = undefined;
+var g: std.ArrayList(std.ArrayList(u32)) = undefined;
+var p: [8]u8 = @splat(0);
+var dist: [40320]u8 = @splat(math.maxInt(u8));
 
+fn dfs(i: u8) void {
+    if (i == n) {
+        const id: u32 = @intCast(g.items.len);
+        g.appendAssumeCapacity(std.ArrayList(u32).initCapacity(allocator, n * (n - 1) / 2) catch unreachable);
+        for (0..n) |j| {
+            for (j + 1..n) |j2| {
+                // if (j2 != j + 1) continue;
+                std.mem.swap(u8, &p[j], &p[j2]);
+                if (rev.get(p)) |id2| {
+                    g.items[id].appendAssumeCapacity(id2);
+                    g.items[id2].appendAssumeCapacity(id);
+                }
+                std.mem.swap(u8, &p[j], &p[j2]);
+            }
+        }
+        rev.putAssumeCapacityNoClobber(p, id);
+        return;
+    }
+
+    var j: u8 = i;
+    while (j < n) : (j += 1) {
+        mem.swap(u8, &p[i], &p[j]);
+        dfs(i + 1);
+        mem.swap(u8, &p[i], &p[j]);
+    }
+}
+
+pub fn solve() !void {
+    n = readInt(u8);
+    const k = readInt(u8);
+    for (0..n) |i| {
+        for (0..n) |j| c[i][j] = readInt(u32);
+        if (c[i][i] != 0) @panic("制約違反");
+    }
+
+    var fact: u32 = 1;
+    {var i: u32 = 1; while (i <= n) : (i += 1) fact *= i;}
+    g = try .initCapacity(allocator, fact);
+    rev = .init(allocator);
+    try rev.ensureTotalCapacity(fact);
+    {var i: u8 = 0; while (i < n) : (i += 1) p[i] = i;}
+    const ident = p;
+    dfs(0);
+
+    // {
+    //     var iter = rev.iterator();
+    //     while (iter.next()) |kv| {
+            // std.debug.print("key: {any} (id = {d})\n", .{kv.key_ptr[0..n], kv.value_ptr.*});
+            // for (g.items[kv.value_ptr.*].items) |to| {
+            //     std.debug.print("\t-> {d}\n", .{to});
+            // }
+    //     }
+    // }
+    assert(rev.get(ident) == 0);
+    var queue: FixedQueue(u32, 40320) = .{};
+    dist[0] = 0;
+    queue.push(0);
+    while (queue.pop()) |u| {
+        const du = dist[u] + 1;
+        for (g.items[u].items) |v| {
+            if (dist[v] == math.maxInt(u8)) {
+                dist[v] = du;
+                queue.push(v);
+            }
+        }
+    }
+    // std.debug.print("{any}\n", .{dist[0..fact]});
+
+    // std.debug.print("{d}\n", .{rev.count()});
+    var ans: u32 = 0;
+    var iter = rev.iterator();
+    while (iter.next()) |kv| {
+        const key = kv.key_ptr[0..n];
+        const val = kv.value_ptr.*;
+        var sum: u32 = 0;
+        if (dist[val] > k) continue;
+        var prev = key[n - 1];
+        for (key) |pi| {
+            sum += c[prev][pi];
+            prev = pi;
+        }
+        // std.debug.print("{any}: {d}\n", .{key, sum});
+        ans = @max(sum, ans);
+    }
+    print("{d}\n", .{ans});
 }
 
 };
@@ -52,7 +141,7 @@ const DebugScanner = struct {
         return true;
     }
 
-    fn nextToken() !?[]u8 {
+    fn next() !?[]u8 {
         while (true) {
             while (pos < line.len and is_delimiter(line[pos])) : (pos += 1) {}
             if (pos >= line.len) {
@@ -67,11 +156,6 @@ const DebugScanner = struct {
             pos = end;
             return ret;
         }
-    }
-
-    fn nextInt(comptime Int: type) !?Int {
-        const token = try nextToken() orelse return null;
-        return try std.fmt.parseInt(Int, token, 10);
     }
 };
 
@@ -90,42 +174,16 @@ const OptimizedScanner = struct {
         input = input_buf[0..size];
     }
 
-    fn getChar() ?u8 {
-        defer pos += 1;
-        return input[pos];
-    }
-
-    fn nextInt(comptime Int: type) !?Int {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
+    fn next() !?[]u8 {
+        while (pos < input.len and is_delimiter(input[pos])) : (pos += 1) {}
+        if (pos >= input.len) {
+            return null;
         }
-        var result: Int = 0;
-        var ch = getChar() orelse return null;
-        var neg = false;
-        if (@typeInfo(Int).int.signedness == .signed) {
-            if (ch == '-') {
-                neg = true;
-                ch = getChar().?;
-            }
-        }
-        while (ch >= '0') {
-            result = result * 10 + @as(Int, @intCast(ch - '0'));
-            ch = getChar().?;
-        }
-        if (@typeInfo(Int).int.signedness == .signed) {
-            if (neg) result = -result;
-        }
-        return result;
-    }
-
-    fn nextToken() !?[]u8 {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
-        const old_pos = pos;
-        while (input[pos] > ' ') pos += 1;
-        defer pos += 1;
-        return input[old_pos..pos];
+        var end = pos;
+        while (end < input.len and !is_delimiter(input[end])) : (end += 1) {}
+        const ret = input[pos..end];
+        pos = end;
+        return ret;
     }
 };
 
@@ -150,32 +208,45 @@ fn ignoreError(value: anytype) ErrorUnionPayload(@TypeOf(value)) {
     return value catch unreachable;
 }
 
-fn readInt(comptime Int: type) Int {
-    return readIntOptional(Int).?;
+fn tryReadInt(comptime T: type) !T {
+    const token = try Scanner.next() orelse return error.UnexpectedEof;
+    return std.fmt.parseInt(T, token, 10);
 }
 
-fn readIntOptional(comptime Int: type) ?Int {
-    return ignoreError(Scanner.nextInt(Int));
+fn tryReadIntOptional(comptime T: type) !?T {
+    const token = try Scanner.next() orelse return null;
+    return try std.fmt.parseInt(T, token, 10);
+}
+
+fn readInt(comptime T: type) T {
+    return ignoreError(tryReadInt(T));
+}
+
+fn readIntOptional(comptime T: type) ?T {
+    return ignoreError(tryReadIntOptional(T));
+}
+
+fn tryReadString() ![]u8 {
+    const token = try Scanner.next() orelse return error.UnexpectedEof;
+    return token;
+}
+
+fn tryReadStringOptional() !?[]u8 {
+    return try Scanner.next();
 }
 
 fn readString() []u8 {
-    return readStringOptional().?;
+    return ignoreError(tryReadString());
 }
 
 fn readStringOptional() ?[]u8 {
-    return ignoreError(Scanner.nextToken());
+    return ignoreError(tryReadStringOptional());
 }
 
 fn readChar() u8 {
-    if (Scanner == DebugScanner) {
-        const token = readString();
-        std.debug.assert(token.len == 1);
-        return token[0];
-    } else {
-        assert(Scanner == OptimizedScanner);
-        defer OptimizedScanner.pos += 1;
-        return OptimizedScanner.getChar().?;
-    }
+    const token = readString();
+    std.debug.assert(token.len == 1);
+    return token[0];
 }
 
 fn print(comptime fmt: []const u8, args: anytype) void {
@@ -321,7 +392,7 @@ const Unionfind = struct {
 
     pub fn clear(self: Self) void {
         @memset(self.size, 1);
-        @memset(self.parent, std.math.maxInt(usize));
+        @memset(self.parent, std.math.maxInt(u32));
     }
 };
 

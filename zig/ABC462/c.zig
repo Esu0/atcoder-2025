@@ -5,12 +5,25 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-const skip_delim = false;
 
 const global = struct {
 
 pub fn solve() !void {
+    const n = readInt(u32);
+    var p: [3<<17]u32 = undefined;
+    for (0..n) |_| {
+        const x = readInt(u32) - 1;
+        const y = readInt(u32) - 1;
+        p[x] = y;
+    }
 
+    var ans: u32 = 0;
+    var min: u32 = math.maxInt(u32);
+    for (0..n) |i| {
+        ans += @intFromBool(p[i] < min);
+        min = @min(p[i], min);
+    }
+    print("{d}\n", .{ans});
 }
 
 };
@@ -96,9 +109,6 @@ const OptimizedScanner = struct {
     }
 
     fn nextInt(comptime Int: type) !?Int {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
         var result: Int = 0;
         var ch = getChar() orelse return null;
         var neg = false;
@@ -119,9 +129,6 @@ const OptimizedScanner = struct {
     }
 
     fn nextToken() !?[]u8 {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
         const old_pos = pos;
         while (input[pos] > ' ') pos += 1;
         defer pos += 1;

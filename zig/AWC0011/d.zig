@@ -5,12 +5,38 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-const skip_delim = false;
 
 const global = struct {
 
-pub fn solve() !void {
+// var g: [2<<17]std.ArrayList(u32) = undefined;
+// fn dfs(u: u32, p: u32) void {
+//     const val = dp[u];
+//     for (g[u].items) |v| {
+//         if (v != p) {
+//             dp[v] += val;
+//             dfs(v, u);
+//         }
+//     }
+// }
 
+pub fn solve() !void {
+    const n = readInt(u32);
+    const q = readInt(u32);
+    var dp: [2<<17]u64 = undefined;
+    for (1..n+1) |i| {
+        const k = readInt(i32);
+        if (k <= 0) @panic("");
+        dp[i] = @intCast(k);
+    }
+    var i: u32 = 2;
+    while (i <= n) : (i += 1) {
+        const p = readInt(u32);
+        dp[i] += dp[p];
+    }
+    for (0..q) |_| {
+        const x = readInt(u32);
+        print("{d}\n", .{dp[x]});
+    }
 }
 
 };
@@ -96,9 +122,7 @@ const OptimizedScanner = struct {
     }
 
     fn nextInt(comptime Int: type) !?Int {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
+        while (input[pos] <= ' ') pos += 1;
         var result: Int = 0;
         var ch = getChar() orelse return null;
         var neg = false;
@@ -119,9 +143,7 @@ const OptimizedScanner = struct {
     }
 
     fn nextToken() !?[]u8 {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
+        while (input[pos] <= ' ') pos += 1;
         const old_pos = pos;
         while (input[pos] > ' ') pos += 1;
         defer pos += 1;

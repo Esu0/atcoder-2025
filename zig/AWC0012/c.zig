@@ -5,12 +5,30 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
-const skip_delim = false;
 
 const global = struct {
 
 pub fn solve() !void {
-
+    const n = readInt(u32);
+    const k = readInt(u32);
+    const m = readInt(u32);
+    var lst: [2]std.ArrayList(u32) = undefined;
+    for (0..2) |i| lst[i] = try .initCapacity(allocator, n);
+    for (0..n) |_| {
+        const h = readInt(u4);
+        const p = readInt(u32);
+        lst[h].appendAssumeCapacity(p);
+    }
+    if (lst[0].items.len < k - m or lst[1].items.len < m) {
+        print("-1\n", .{});
+        return;
+    }
+    mem.sortUnstable(u32, lst[0].items, {}, std.sort.desc(u32));
+    mem.sortUnstable(u32, lst[1].items, {}, std.sort.desc(u32));
+    var ans: u64 = 0;
+    for (lst[0].items[0..k-m]) |p| ans += p;
+    for (lst[1].items[0..m]) |p| ans += p;
+    print("{d}\n", .{ans});
 }
 
 };
@@ -96,9 +114,7 @@ const OptimizedScanner = struct {
     }
 
     fn nextInt(comptime Int: type) !?Int {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
+        while (input[pos] <= ' ') pos += 1;
         var result: Int = 0;
         var ch = getChar() orelse return null;
         var neg = false;
@@ -119,9 +135,7 @@ const OptimizedScanner = struct {
     }
 
     fn nextToken() !?[]u8 {
-        if (skip_delim) {
-            while (input[pos] <= ' ') pos += 1;
-        }
+        while (input[pos] <= ' ') pos += 1;
         const old_pos = pos;
         while (input[pos] > ' ') pos += 1;
         defer pos += 1;
