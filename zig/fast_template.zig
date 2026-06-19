@@ -1,3 +1,5 @@
+const global = struct {
+
 const std = @import("std");
 const assert = std.debug.assert;
 const mem = std.mem;
@@ -6,14 +8,20 @@ const math = std.math;
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
 const skip_delim = false;
+const force_optimized = false;
 
-const global = struct {
 
 pub fn solve() !void {
-
+    
 }
 
-};
+const FixedQueue = lib.FixedQueue;
+const FixedDeque = lib.FixedDeque;
+const ModInt = lib.ModInt;
+const PrimeModInt = lib.PrimeModInt;
+const ModIntEx = lib.ModIntEx;
+const Unionfind = lib.Unionfind;
+
 
 const builtin = @import("builtin");
 
@@ -77,17 +85,16 @@ const DebugScanner = struct {
 
 const OptimizedScanner = struct {
     var input_buf: [MAX_INPUT_SIZE]u8 = undefined;
-    var input: []u8 = undefined;
+    var input: []const u8 = undefined;
     var pos: usize = 0;
-    var stdin_buf: [1024]u8 = undefined;
-    var stdin_reader = std.fs.File.stdin().reader(&stdin_buf);
-    const stdin = &stdin_reader.interface;
+    var buf_pos: usize = 1;
 
     fn init() !void {
-        const size: usize = @intCast(try stdin_reader.getSize());
-        if (MAX_INPUT_SIZE < size) return anyerror.FileSizeExceeded;
-        try stdin.readSliceAll(input_buf[0..size]);
-        input = input_buf[0..size];
+        const ptr = try std.posix.mmap(null, MAX_INPUT_SIZE, std.posix.PROT.READ, .{
+            .TYPE = .PRIVATE,
+        }, std.posix.STDIN_FILENO, 0);
+        input = ptr[0..MAX_INPUT_SIZE];
+        input_buf[0] = 0;
     }
 
     fn getChar() ?u8 {
@@ -122,14 +129,18 @@ const OptimizedScanner = struct {
         if (skip_delim) {
             while (input[pos] <= ' ') pos += 1;
         }
-        const old_pos = pos;
-        while (input[pos] > ' ') pos += 1;
+        const old_buf_pos = buf_pos;
+        while (input[pos] > ' ') {
+            input_buf[buf_pos] = input[pos];
+            buf_pos += 1;
+            pos += 1;
+        }
         defer pos += 1;
-        return input[old_pos..pos];
+        return input_buf[old_buf_pos..buf_pos];
     }
 };
 
-const Scanner = switch (builtin.mode) {
+const Scanner = if (force_optimized) OptimizedScanner else switch (builtin.mode) {
     .Debug, .ReleaseSafe => DebugScanner,
     else => OptimizedScanner,
 };
@@ -182,17 +193,25 @@ fn print(comptime fmt: []const u8, args: anytype) void {
     ignoreError(stdout.print(fmt, args));
 }
 
+};
+
 pub fn main() !void {
-    if (safety) {
-        try Scanner.init();
+    if (global.safety) {
+        try global.Scanner.init();
         try global.solve();
-        try stdout.flush();
+        try global.stdout.flush();
     } else {
-        Scanner.init() catch unreachable;
+        global.Scanner.init() catch unreachable;
         global.solve() catch unreachable;
-        stdout.flush() catch unreachable;
+        global.stdout.flush() catch unreachable;
     }
 }
+
+const lib = struct {
+
+const std = @import("std");
+const mem = std.mem;
+const math = std.math;
 
 fn FixedQueue(comptime T: type, comptime max_size: u32) type {
     return struct {
@@ -483,3 +502,4 @@ pub fn ModIntEx(modulo: comptime_int, comptime modulo_is_prime: bool) type {
         };
     };
 }
+};

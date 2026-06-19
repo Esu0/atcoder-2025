@@ -1,3 +1,5 @@
+const global = struct {
+
 const std = @import("std");
 const assert = std.debug.assert;
 const mem = std.mem;
@@ -5,14 +7,21 @@ const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
 const safety = false;
+const skip_delim = false;
+const force_optimized = false;
 
-const global = struct {
 
 pub fn solve() !void {
-
+    
 }
 
-};
+const FixedQueue = lib.FixedQueue;
+const FixedDeque = lib.FixedDeque;
+const ModInt = lib.ModInt;
+const PrimeModInt = lib.PrimeModInt;
+const ModIntEx = lib.ModIntEx;
+const Unionfind = lib.Unionfind;
+
 
 const builtin = @import("builtin");
 
@@ -162,18 +171,25 @@ fn readChar() u8 {
 fn print(comptime fmt: []const u8, args: anytype) void {
     ignoreError(stdout.print(fmt, args));
 }
+};
 
 pub fn main() !void {
-    if (safety) {
-        try Scanner.init();
+    if (global.safety) {
+        try global.Scanner.init();
         try global.solve();
-        try stdout.flush();
+        try global.stdout.flush();
     } else {
-        Scanner.init() catch unreachable;
+        global.Scanner.init() catch unreachable;
         global.solve() catch unreachable;
-        stdout.flush() catch unreachable;
+        global.stdout.flush() catch unreachable;
     }
 }
+
+const lib = struct {
+
+const std = @import("std");
+const mem = std.mem;
+const math = std.math;
 
 fn FixedQueue(comptime T: type, comptime max_size: u32) type {
     return struct {
@@ -302,7 +318,7 @@ const Unionfind = struct {
 
     pub fn clear(self: Self) void {
         @memset(self.size, 1);
-        @memset(self.parent, std.math.maxInt(u32));
+        @memset(self.parent, std.math.maxInt(usize));
     }
 };
 
@@ -464,3 +480,4 @@ pub fn ModIntEx(modulo: comptime_int, comptime modulo_is_prime: bool) type {
         };
     };
 }
+};
