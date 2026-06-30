@@ -12,9 +12,21 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const a = readInt(u32);
-    const d = readInt(u32);
-    try stdout.writeAll(if (a <= d) "Yes\n" else "No\n");
+    const l = readInt(u32);
+    const r = readInt(u32);
+    if (r - l + 1 >= 2019) {
+        print("0\n", .{});
+    } else {
+        var i: u32 = l;
+        var ans: u32 = 2019;
+        while (i <= r) : (i += 1) {
+            var j: u32 = i + 1;
+            while (j <= r) : (j += 1) {
+                ans = @min(ans, @as(u32, @intCast(@as(u64, i) * j % 2019)));
+            }
+        }
+        print("{d}\n", .{ans});
+    }
 }
 
 const FixedQueue = lib.FixedQueue;

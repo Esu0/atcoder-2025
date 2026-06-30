@@ -12,9 +12,20 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const a = readInt(u32);
-    const d = readInt(u32);
-    try stdout.writeAll(if (a <= d) "Yes\n" else "No\n");
+    var rev: [100]usize = undefined;
+    const n = readInt(u32);
+    for (0..n) |i| {
+        const a = readInt(u32);
+        rev[a - 1] = i;
+    }
+    for (0..n) |i| {
+        const b = readInt(u32) - 1;
+        if (b != rev[i]) {
+            print("No\n", .{});
+            return;
+        }
+    }
+    print("Yes\n", .{});
 }
 
 const FixedQueue = lib.FixedQueue;

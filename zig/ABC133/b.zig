@@ -10,11 +10,34 @@ const safety = false;
 const skip_delim = false;
 const force_optimized = false;
 
+fn isSquareOfInt(x: u32) bool {
+    var ok: u32 = 0;
+    var ng: u32 = 30001;
+    while (ng - ok > 1) {
+        const m = (ng + ok) / 2;
+        if (m * m <= x) ok = m else ng = m;
+    }
+    return ok * ok == x;
+}
 
 pub fn solve() !void {
-    const a = readInt(u32);
+    const n = readInt(u32);
     const d = readInt(u32);
-    try stdout.writeAll(if (a <= d) "Yes\n" else "No\n");
+    var x: [10][10]i32 = undefined;
+    for (0..n) |i| {
+        for (0..d) |j| x[i][j] = readInt(i32);
+    }
+    var ans: u32 = 0;
+    for (0..n) |i| {
+        for (0..i) |j| {
+            var sum: i32 = 0;
+            for (0..d) |k| {
+                sum += (x[i][k] - x[j][k]) * (x[i][k] - x[j][k]);
+            }
+            ans += @intFromBool(isSquareOfInt(@intCast(sum)));
+        }
+    }
+    print("{d}\n", .{ans});
 }
 
 const FixedQueue = lib.FixedQueue;

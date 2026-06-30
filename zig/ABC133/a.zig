@@ -12,9 +12,10 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
+    const n = readInt(u32);
     const a = readInt(u32);
-    const d = readInt(u32);
-    try stdout.writeAll(if (a <= d) "Yes\n" else "No\n");
+    const b = readInt(u32);
+    print("{d}\n", .{@min(n * a, b)});
 }
 
 const FixedQueue = lib.FixedQueue;
