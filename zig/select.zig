@@ -4,7 +4,7 @@ const select = struct {
 
     const INSERTION_THRESHOLD = 16;
 
-    pub fn select_nth(
+    pub fn selectNth(
         comptime T: type,
         items: []T,
         index: usize,
@@ -119,7 +119,7 @@ const select = struct {
             a += 3;
             b += 3;
         }
-        select_nth(T, array[lo..lo + frac], piv, context, lessThanFn);
+        selectNth(T, array[lo..lo + frac], piv, context, lessThanFn);
         return lo + piv;
     }
 

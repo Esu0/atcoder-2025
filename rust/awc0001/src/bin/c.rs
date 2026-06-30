@@ -4,6 +4,8 @@ fn main() {
         k: usize,
         mut d: [u64; n],
     }
-    d.sort_unstable();
+    if k != 0 {
+        d.select_nth_unstable(n - k);
+    }
     println!("{}", d[..n-k].iter().sum::<u64>());
 }

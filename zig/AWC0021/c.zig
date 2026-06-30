@@ -1,3 +1,5 @@
+const global = struct {
+
 const std = @import("std");
 const assert = std.debug.assert;
 const mem = std.mem;
@@ -8,20 +10,36 @@ const safety = false;
 const skip_delim = false;
 const force_optimized = false;
 
-const global = struct {
 
 pub fn solve() !void {
     const n = readInt(u32);
     const k = readInt(u32);
-    var d: [2<<17]u32 = undefined;
-    for (0..n) |i| d[i] = readInt(u32);
-    select.select_nth(u32, d[0..n], n - k, {}, std.sort.asc(u32));
+    var x: std.ArrayList(u64) = try .initCapacity(allocator, n);
+    for (0..n) |_| {
+        const c = readInt(u32);
+        const m = readInt(u32);
+        var sum: u64 = 0;
+        for (0..m) |_| {
+            const p = readInt(u32);
+            sum += p;
+        }
+        if (sum > c) x.appendAssumeCapacity(sum - c);
+    }
     var ans: u64 = 0;
-    for (0..n - k) |i| ans += d[i];
+    if (x.items.len > k) {
+        select.select_nth(u64, x.items, k - 1, {}, std.sort.desc(u64));
+    }
+    for (0..@min(x.items.len, k)) |i| ans += x.items[i];
     print("{d}\n", .{ans});
 }
 
-};
+const FixedQueue = lib.FixedQueue;
+const FixedDeque = lib.FixedDeque;
+const ModInt = lib.ModInt;
+const PrimeModInt = lib.PrimeModInt;
+const ModIntEx = lib.ModIntEx;
+const Unionfind = lib.Unionfind;
+
 
 const builtin = @import("builtin");
 
@@ -193,17 +211,25 @@ fn print(comptime fmt: []const u8, args: anytype) void {
     ignoreError(stdout.print(fmt, args));
 }
 
+};
+
 pub fn main() !void {
-    if (safety) {
-        try Scanner.init();
+    if (global.safety) {
+        try global.Scanner.init();
         try global.solve();
-        try stdout.flush();
+        try global.stdout.flush();
     } else {
-        Scanner.init() catch unreachable;
+        global.Scanner.init() catch unreachable;
         global.solve() catch unreachable;
-        stdout.flush() catch unreachable;
+        global.stdout.flush() catch unreachable;
     }
 }
+
+const lib = struct {
+
+const std = @import("std");
+const mem = std.mem;
+const math = std.math;
 
 fn FixedQueue(comptime T: type, comptime max_size: u32) type {
     return struct {
@@ -494,8 +520,11 @@ pub fn ModIntEx(modulo: comptime_int, comptime modulo_is_prime: bool) type {
         };
     };
 }
-
+};
 const select = struct {
+    const std = @import("std");
+    const assert = std.debug.assert;
+
     const INSERTION_THRESHOLD = 16;
 
     pub fn select_nth(
