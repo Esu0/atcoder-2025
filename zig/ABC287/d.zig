@@ -12,25 +12,16 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
-            }
-        }
-        ans = @max(@as(u64, a) * b, ans);
+    const s = readString();
+    const t = readString();
+    var pref: u32 = 0;
+    while (pref < t.len and (s[pref] == '?' or t[pref] == '?' or s[pref] == t[pref])) pref += 1;
+    var suf: u32 = 0;
+    while (suf < t.len and (s[s.len-suf-1] == '?' or t[t.len-suf-1] == '?' or s[s.len-suf-1] == t[t.len-suf-1])) suf += 1;
+    var i: u32 = 0;
+    while (i <= t.len) : (i += 1) {
+        try stdout.writeAll(if (i <= pref and t.len - i <= suf) "Yes\n" else "No\n");
     }
-    print("{d}\n", .{ans});
 }
 
 const FixedQueue = lib.FixedQueue;

@@ -12,25 +12,30 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
+    const n = readInt(u32);
+    const m = readInt(u32);
+    var p: [100]u32 = undefined;
+    var f: [100]u100 = @splat(0);
+    for (0..n) |i| {
+        p[i] = readInt(u32);
+        const c = readInt(u32);
+        for (0..c) |_| {
+            const fij = readInt(u7) - 1;
+            assert(fij < m);
+            f[i] |= @as(u100, 1) << fij;
+        }
+    }
+
+    for (0..n) |i| {
+        for (0..n) |j| {
+            if (p[i] >= p[j] and f[j] | f[i] == f[j] and !(p[i] == p[j] and f[i] == f[j])) {
+                // std.debug.print("{d} {d}\n", .{i + 1, j + 1});
+                print("Yes\n", .{});
+                return;
             }
         }
-        ans = @max(@as(u64, a) * b, ans);
     }
-    print("{d}\n", .{ans});
+    print("No\n", .{});
 }
 
 const FixedQueue = lib.FixedQueue;

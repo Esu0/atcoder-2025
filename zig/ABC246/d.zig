@@ -12,23 +12,18 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
-            }
+    const n = readInt(u64);
+    var a: u64 = 0;
+    var ans: u64 = math.maxInt(u64);
+    while (a <= 1_000_001) : (a += 1) {
+        var ng: i32 = -1;
+        var ok: i32 = 1_000_002;
+        while (ok - ng > 1) {
+            const m: u64 = @as(u32, @intCast(ok + ng)) / 2;
+            if (a*a*a + a*a*m + a*m*m + m*m*m < n) ng = @intCast(m) else ok = @intCast(m);
         }
-        ans = @max(@as(u64, a) * b, ans);
+        const b: u64 = @intCast(ok);
+        ans = @min(ans, a*a*a + a*a*b + a*b*b + b*b*b);
     }
     print("{d}\n", .{ans});
 }

@@ -10,27 +10,42 @@ const safety = false;
 const skip_delim = false;
 const force_optimized = false;
 
+var memo: std.AutoHashMap(u64, f64) = undefined;
+var A: u8 = undefined;
+var X: u32 = undefined;
+var Y: u32 = undefined;
+
+fn tof(x: anytype) f64 {
+    return @floatFromInt(x);
+}
+
+fn dfs(n: u64) f64 {
+    if (n == 0) return 0;
+    const res = memo.getOrPutAssumeCapacity(n);
+    if (res.found_existing) return res.value_ptr.*;
+    var ans: f64 = undefined;
+    defer res.value_ptr.* = ans;
+    var v: [7]f64 = undefined;
+    var sum: f64 = 0;
+    for (2..7) |i| {
+        v[i] = dfs(n / i);
+        sum += v[i];
+    }
+    const a = v[A];
+    sum += tof(Y) * 6;
+    sum /= 5;
+    ans = @min(sum, a + tof(X));
+    return ans;
+}
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
-            }
-        }
-        ans = @max(@as(u64, a) * b, ans);
-    }
-    print("{d}\n", .{ans});
+    memo = .init(allocator);
+    try memo.ensureTotalCapacity(10000);
+    const n = readInt(u64);
+    A = readInt(u8);
+    X = readInt(u32);
+    Y = readInt(u32);
+    print("{d:.15}\n", .{dfs(n)});
 }
 
 const FixedQueue = lib.FixedQueue;

@@ -12,25 +12,28 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
+    const s = readString();
+    var stack: std.ArrayList(u8) = try .initCapacity(allocator, s.len);
+    var cnt: [26]bool = @splat(false);
+    for (s) |si| {
+        if (si == ')') {
+            while (stack.getLast() != '(') {
+                const c = stack.pop().?;
+                cnt[c - 'a'] = false;
             }
+            _ = stack.pop().?;
+        } else {
+            if (si != '(') {
+                if (cnt[si - 'a']) {
+                    print("No\n", .{});
+                    return;
+                }
+                cnt[si - 'a'] = true;
+            }
+            stack.appendAssumeCapacity(si);
         }
-        ans = @max(@as(u64, a) * b, ans);
     }
-    print("{d}\n", .{ans});
+    print("Yes\n", .{});
 }
 
 const FixedQueue = lib.FixedQueue;

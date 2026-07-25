@@ -1,36 +1,33 @@
+const global = struct {
+
 const std = @import("std");
 const assert = std.debug.assert;
 const mem = std.mem;
 const math = std.math;
 
 const MAX_INPUT_SIZE = 1 << 24;
+const safety = false;
+const skip_delim = false;
+const force_optimized = false;
+
 
 pub fn solve() !void {
     const h = readInt(u32);
     const w = readInt(u32);
     var a: [2000][2000]u32 = undefined;
     for (0..h) |i| {
-        for (0..w) |j| a[i][j] = readInt(u32);
+        for (0..w) |j| a[i][j] = readInt(u8);
     }
-    var row: [2000]u32 = undefined;
-    var col: [2000]u32 = undefined;
-    for (0..h) |i| {
-        var sum: u32 = 0;
-        for (0..w) |j| sum += a[i][j];
-        row[i] = sum;
-    }
-    for (0..w) |i| {
-        var sum: u32 = 0;
-        for (0..h) |j| sum += a[j][i];
-        col[i] = sum;
-    }
-    for (0..h) |i| {
-        for (0..w) |j| {
-            print("{d} ", .{row[i] + col[j] - a[i][j]});
-        }
-        try stdout.writeByte('\n');
-    }
+    
 }
+
+const FixedQueue = lib.FixedQueue;
+const FixedDeque = lib.FixedDeque;
+const ModInt = lib.ModInt;
+const PrimeModInt = lib.PrimeModInt;
+const ModIntEx = lib.ModIntEx;
+const Unionfind = lib.Unionfind;
+
 
 const builtin = @import("builtin");
 
@@ -69,7 +66,7 @@ const DebugScanner = struct {
         return true;
     }
 
-    fn next() !?[]u8 {
+    fn nextToken() !?[]u8 {
         while (true) {
             while (pos < line.len and is_delimiter(line[pos])) : (pos += 1) {}
             if (pos >= line.len) {
@@ -85,37 +82,71 @@ const DebugScanner = struct {
             return ret;
         }
     }
+
+    fn nextInt(comptime Int: type) !?Int {
+        const token = try nextToken() orelse return null;
+        return try std.fmt.parseInt(Int, token, 10);
+    }
 };
 
 const OptimizedScanner = struct {
     var input_buf: [MAX_INPUT_SIZE]u8 = undefined;
-    var input: []u8 = undefined;
+    var input: []const u8 = undefined;
     var pos: usize = 0;
-    var stdin_buf: [1024]u8 = undefined;
-    var stdin_reader = std.fs.File.stdin().reader(&stdin_buf);
-    const stdin = &stdin_reader.interface;
+    var buf_pos: usize = 1;
 
     fn init() !void {
-        const size: usize = @intCast(try stdin_reader.getSize());
-        if (MAX_INPUT_SIZE < size) return anyerror.FileSizeExceeded;
-        try stdin.readSliceAll(input_buf[0..size]);
-        input = input_buf[0..size];
+        const ptr = try std.posix.mmap(null, MAX_INPUT_SIZE, std.posix.PROT.READ, .{
+            .TYPE = .PRIVATE,
+        }, std.posix.STDIN_FILENO, 0);
+        input = ptr[0..MAX_INPUT_SIZE];
+        input_buf[0] = 0;
     }
 
-    fn next() !?[]u8 {
-        while (pos < input.len and is_delimiter(input[pos])) : (pos += 1) {}
-        if (pos >= input.len) {
-            return null;
+    fn getChar() ?u8 {
+        defer pos += 1;
+        return input[pos];
+    }
+
+    fn nextInt(comptime Int: type) !?Int {
+        if (skip_delim) {
+            while (input[pos] <= ' ') pos += 1;
         }
-        var end = pos;
-        while (end < input.len and !is_delimiter(input[end])) : (end += 1) {}
-        const ret = input[pos..end];
-        pos = end;
-        return ret;
+        var result: Int = 0;
+        var ch = getChar() orelse return null;
+        var neg = false;
+        if (@typeInfo(Int).int.signedness == .signed) {
+            if (ch == '-') {
+                neg = true;
+                ch = getChar().?;
+            }
+        }
+        while (ch >= '0') {
+            result = result * 10 + @as(Int, @intCast(ch - '0'));
+            ch = getChar().?;
+        }
+        if (@typeInfo(Int).int.signedness == .signed) {
+            if (neg) result = -result;
+        }
+        return result;
+    }
+
+    fn nextToken() !?[]u8 {
+        if (skip_delim) {
+            while (input[pos] <= ' ') pos += 1;
+        }
+        const old_buf_pos = buf_pos;
+        while (input[pos] > ' ') {
+            input_buf[buf_pos] = input[pos];
+            buf_pos += 1;
+            pos += 1;
+        }
+        defer pos += 1;
+        return input_buf[old_buf_pos..buf_pos];
     }
 };
 
-const Scanner = switch (builtin.mode) {
+const Scanner = if (force_optimized) OptimizedScanner else switch (builtin.mode) {
     .Debug, .ReleaseSafe => DebugScanner,
     else => OptimizedScanner,
 };
@@ -129,62 +160,64 @@ fn ErrorUnionPayload(comptime T: type) type {
 }
 
 fn ignoreError(value: anytype) ErrorUnionPayload(@TypeOf(value)) {
-    return value catch |err| {
-        std.log.err("{any}", .{err});
-        @panic("");
-    };
+    // return value catch |err| {
+    //     std.log.err("{any}", .{err});
+    //     @panic("");
+    // };
+    return value catch unreachable;
 }
 
-fn tryReadInt(comptime T: type) !T {
-    const token = try Scanner.next() orelse return error.UnexpectedEof;
-    return std.fmt.parseInt(T, token, 10);
+fn readInt(comptime Int: type) Int {
+    return readIntOptional(Int).?;
 }
 
-fn tryReadIntOptional(comptime T: type) !?T {
-    const token = try Scanner.next() orelse return null;
-    return try std.fmt.parseInt(T, token, 10);
-}
-
-fn readInt(comptime T: type) T {
-    return ignoreError(tryReadInt(T));
-}
-
-fn readIntOptional(comptime T: type) ?T {
-    return ignoreError(tryReadIntOptional(T));
-}
-
-fn tryReadString() ![]u8 {
-    const token = try Scanner.next() orelse return error.UnexpectedEof;
-    return token;
-}
-
-fn tryReadStringOptional() !?[]u8 {
-    return try Scanner.next();
+fn readIntOptional(comptime Int: type) ?Int {
+    return ignoreError(Scanner.nextInt(Int));
 }
 
 fn readString() []u8 {
-    return ignoreError(tryReadString());
+    return readStringOptional().?;
 }
 
 fn readStringOptional() ?[]u8 {
-    return ignoreError(tryReadStringOptional());
+    return ignoreError(Scanner.nextToken());
 }
 
 fn readChar() u8 {
-    const token = readString();
-    std.debug.assert(token.len == 1);
-    return token[0];
+    if (Scanner == DebugScanner) {
+        const token = readString();
+        std.debug.assert(token.len == 1);
+        return token[0];
+    } else {
+        assert(Scanner == OptimizedScanner);
+        defer OptimizedScanner.pos += 1;
+        return OptimizedScanner.getChar().?;
+    }
 }
 
 fn print(comptime fmt: []const u8, args: anytype) void {
     ignoreError(stdout.print(fmt, args));
 }
 
+};
+
 pub fn main() !void {
-    try Scanner.init();
-    try solve();
-    try stdout.flush();
+    if (global.safety) {
+        try global.Scanner.init();
+        try global.solve();
+        try global.stdout.flush();
+    } else {
+        global.Scanner.init() catch unreachable;
+        global.solve() catch unreachable;
+        global.stdout.flush() catch unreachable;
+    }
 }
+
+const lib = struct {
+
+const std = @import("std");
+const mem = std.mem;
+const math = std.math;
 
 fn FixedQueue(comptime T: type, comptime max_size: u32) type {
     return struct {
@@ -193,6 +226,10 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
         rp: u32 = 0,
         wp: u32 = 0,
 
+        pub fn clear(self: *Self) void {
+            self.rp = 0;
+            self.wp = 0;
+        }
         pub fn push(self: *Self, item: T) void {
             self.buf[self.wp] = item;
             self.wp += 1;
@@ -204,6 +241,52 @@ fn FixedQueue(comptime T: type, comptime max_size: u32) type {
             const rp = self.rp;
             self.rp = rp + 1;
             return self.buf[rp];
+        }
+    };
+}
+
+fn FixedDeque(comptime T: type, comptime front_cap: comptime_int, comptime back_cap: comptime_int) type {
+    return struct {
+        const Self = @This();
+        buf: [front_cap+back_cap]T = undefined,
+        head: u32 = front_cap,
+        tail: u32 = front_cap,
+
+        pub fn clear(self: *Self) void {
+            self.head = front_cap;
+            self.tail = front_cap;
+        }
+        pub fn len(self: *const Self) u32 {
+            return self.tail - self.head;
+        }
+        pub fn isEmpty(self: *const Self) bool {
+            return self.tail == self.head;
+        }
+        pub fn pushBack(self: *Self, item: T) void {
+            self.buf[self.tail] = item;
+            self.tail += 1;
+        }
+        pub fn pushFront(self: *Self, item: T) void {
+            self.head -= 1;
+            self.buf[self.head] = item;
+        }
+        pub fn popBack(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            self.tail -= 1;
+            return self.buf[self.tail];
+        }
+        pub fn popFront(self: *Self) ?T {
+            if (self.isEmpty()) return null;
+            defer self.head += 1;
+            return self.buf[self.head];
+        }
+        pub fn front(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.head];
+        }
+        pub fn back(self: *const Self) ?T {
+            if (self.isEmpty()) return null;
+            return self.buf[self.tail - 1];
         }
     };
 }
@@ -425,3 +508,4 @@ pub fn ModIntEx(modulo: comptime_int, comptime modulo_is_prime: bool) type {
         };
     };
 }
+};

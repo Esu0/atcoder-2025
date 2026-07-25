@@ -12,25 +12,29 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
-            }
+    const n = readInt(u32);
+    const m = readInt(u32);
+    var a: [1000]u32 = undefined;
+    var b: [1000]u32 = undefined;
+    for (0..n) |i| a[i] = readInt(u32);
+    for (0..m) |i| b[i] = readInt(u32);
+    const dp = try allocator.alloc([]u32, n + 1);
+    for (0..n+1) |i| dp[i] = try allocator.alloc(u32, m + 1);
+    dp[0][0] = 0;
+    for (1..m+1) |i| dp[0][i] = @intCast(i);
+    for (1..n+1) |i| {
+        dp[i][0] = @intCast(i);
+        for (1..m+1) |j| {
+            var v: u32 = math.maxInt(u32);
+            if (i == 0 and j == 0) v = 0;
+            defer dp[i][j] = v;
+            v = @min(v, dp[i - 1][j] + 1);
+            v = @min(v, dp[i][j - 1] + 1);
+            const d: u1 = if (a[i - 1] == b[j - 1]) 0 else 1;
+            v = @min(v, dp[i - 1][j - 1] + d);
         }
-        ans = @max(@as(u64, a) * b, ans);
     }
-    print("{d}\n", .{ans});
+    print("{d}\n", .{dp[n][m]});
 }
 
 const FixedQueue = lib.FixedQueue;

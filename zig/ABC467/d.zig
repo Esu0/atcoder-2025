@@ -12,25 +12,27 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
-            }
+    const t = readInt(u32);
+    for (0..t) |_| {
+        var p: [4]struct {i32, i32} = undefined;
+        inline for (0..4) |i| {
+            p[i] = .{ readInt(i32), readInt(i32) };
         }
-        ans = @max(@as(u64, a) * b, ans);
+        const d1 = .{p[0][0] - p[1][0], p[0][1] - p[1][1]};
+        const d2 = .{p[2][0] - p[3][0], p[2][1] - p[3][1]};
+        if (@as(i64, d1[0]) * d2[1] == @as(i64, d1[1]) * d2[0]) {
+            const m1: struct {i64, i64} = .{p[0][0] + p[1][0], p[0][1] + p[1][1]};
+            const m2: struct {i64, i64} = .{p[2][0] + p[3][0], p[2][1] + p[3][1]};
+            const d3 = .{m1[0] - m2[0], m1[1] - m2[1]};
+            if (d3[0] * d1[0] + d3[1] * d1[1] == 0) {
+                print("Yes\n", .{});
+            } else {
+                print("No\n", .{});
+            }
+        } else {
+            print("Yes\n", .{});
+        }
     }
-    print("{d}\n", .{ans});
 }
 
 const FixedQueue = lib.FixedQueue;
@@ -78,7 +80,7 @@ const DebugScanner = struct {
         return true;
     }
 
-    fn next() !?[]u8 {
+    fn nextToken() !?[]u8 {
         while (true) {
             while (pos < line.len and is_delimiter(line[pos])) : (pos += 1) {}
             if (pos >= line.len) {
@@ -94,37 +96,71 @@ const DebugScanner = struct {
             return ret;
         }
     }
+
+    fn nextInt(comptime Int: type) !?Int {
+        const token = try nextToken() orelse return null;
+        return try std.fmt.parseInt(Int, token, 10);
+    }
 };
 
 const OptimizedScanner = struct {
     var input_buf: [MAX_INPUT_SIZE]u8 = undefined;
-    var input: []u8 = undefined;
+    var input: []const u8 = undefined;
     var pos: usize = 0;
-    var stdin_buf: [1024]u8 = undefined;
-    var stdin_reader = std.fs.File.stdin().reader(&stdin_buf);
-    const stdin = &stdin_reader.interface;
+    var buf_pos: usize = 1;
 
     fn init() !void {
-        const size: usize = @intCast(try stdin_reader.getSize());
-        if (MAX_INPUT_SIZE < size) return anyerror.FileSizeExceeded;
-        try stdin.readSliceAll(input_buf[0..size]);
-        input = input_buf[0..size];
+        const ptr = try std.posix.mmap(null, MAX_INPUT_SIZE, std.posix.PROT.READ, .{
+            .TYPE = .PRIVATE,
+        }, std.posix.STDIN_FILENO, 0);
+        input = ptr[0..MAX_INPUT_SIZE];
+        input_buf[0] = 0;
     }
 
-    fn next() !?[]u8 {
-        while (pos < input.len and is_delimiter(input[pos])) : (pos += 1) {}
-        if (pos >= input.len) {
-            return null;
+    fn getChar() ?u8 {
+        defer pos += 1;
+        return input[pos];
+    }
+
+    fn nextInt(comptime Int: type) !?Int {
+        if (skip_delim) {
+            while (input[pos] <= ' ') pos += 1;
         }
-        var end = pos;
-        while (end < input.len and !is_delimiter(input[end])) : (end += 1) {}
-        const ret = input[pos..end];
-        pos = end;
-        return ret;
+        var result: Int = 0;
+        var ch = getChar() orelse return null;
+        var neg = false;
+        if (@typeInfo(Int).int.signedness == .signed) {
+            if (ch == '-') {
+                neg = true;
+                ch = getChar().?;
+            }
+        }
+        while (ch >= '0') {
+            result = result * 10 + @as(Int, @intCast(ch - '0'));
+            ch = getChar().?;
+        }
+        if (@typeInfo(Int).int.signedness == .signed) {
+            if (neg) result = -result;
+        }
+        return result;
+    }
+
+    fn nextToken() !?[]u8 {
+        if (skip_delim) {
+            while (input[pos] <= ' ') pos += 1;
+        }
+        const old_buf_pos = buf_pos;
+        while (input[pos] > ' ') {
+            input_buf[buf_pos] = input[pos];
+            buf_pos += 1;
+            pos += 1;
+        }
+        defer pos += 1;
+        return input_buf[old_buf_pos..buf_pos];
     }
 };
 
-const Scanner = switch (builtin.mode) {
+const Scanner = if (force_optimized) OptimizedScanner else switch (builtin.mode) {
     .Debug, .ReleaseSafe => DebugScanner,
     else => OptimizedScanner,
 };
@@ -145,50 +181,38 @@ fn ignoreError(value: anytype) ErrorUnionPayload(@TypeOf(value)) {
     return value catch unreachable;
 }
 
-fn tryReadInt(comptime T: type) !T {
-    const token = try Scanner.next() orelse return error.UnexpectedEof;
-    return std.fmt.parseInt(T, token, 10);
+fn readInt(comptime Int: type) Int {
+    return readIntOptional(Int).?;
 }
 
-fn tryReadIntOptional(comptime T: type) !?T {
-    const token = try Scanner.next() orelse return null;
-    return try std.fmt.parseInt(T, token, 10);
-}
-
-fn readInt(comptime T: type) T {
-    return ignoreError(tryReadInt(T));
-}
-
-fn readIntOptional(comptime T: type) ?T {
-    return ignoreError(tryReadIntOptional(T));
-}
-
-fn tryReadString() ![]u8 {
-    const token = try Scanner.next() orelse return error.UnexpectedEof;
-    return token;
-}
-
-fn tryReadStringOptional() !?[]u8 {
-    return try Scanner.next();
+fn readIntOptional(comptime Int: type) ?Int {
+    return ignoreError(Scanner.nextInt(Int));
 }
 
 fn readString() []u8 {
-    return ignoreError(tryReadString());
+    return readStringOptional().?;
 }
 
 fn readStringOptional() ?[]u8 {
-    return ignoreError(tryReadStringOptional());
+    return ignoreError(Scanner.nextToken());
 }
 
 fn readChar() u8 {
-    const token = readString();
-    std.debug.assert(token.len == 1);
-    return token[0];
+    if (Scanner == DebugScanner) {
+        const token = readString();
+        std.debug.assert(token.len == 1);
+        return token[0];
+    } else {
+        assert(Scanner == OptimizedScanner);
+        defer OptimizedScanner.pos += 1;
+        return OptimizedScanner.getChar().?;
+    }
 }
 
 fn print(comptime fmt: []const u8, args: anytype) void {
     ignoreError(stdout.print(fmt, args));
 }
+
 };
 
 pub fn main() !void {

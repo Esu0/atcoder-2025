@@ -10,27 +10,57 @@ const safety = false;
 const skip_delim = false;
 const force_optimized = false;
 
-
+const MInt = ModInt(998244353);
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
+    const h = readInt(u32);
+    const w = readInt(u32);
+    var cnt: u32 = 0;
+    var dif: i32 = 0;
+    var s: [1000][]u8 = undefined;
+    for (0..h) |i| s[i] = readString();
+    var uf: Unionfind = try .init(allocator, h * w);
+    var arr: std.ArrayList(u32) = try .initCapacity(allocator, 4);
+    for (0..h) |i| {
+        for (0..w) |j| {
+            if (s[i][j] != '#') continue;
+            if (i + 1 < h and s[i + 1][j] == '#') {
+                _ = uf.unite(i * w + j, (i + 1) * w + j);
+            }
+            if (j + 1 < w and s[i][j + 1] == '#') {
+                _ = uf.unite(i * w + j, i * w + j + 1);
             }
         }
-        ans = @max(@as(u64, a) * b, ans);
     }
-    print("{d}\n", .{ans});
+
+    for (0..h) |i| {
+        for (0..w) |j| {
+            if (s[i][j] == '#') continue;
+            arr.clearRetainingCapacity();
+            if (i > 0 and s[i - 1][j] == '#') {
+                arr.appendAssumeCapacity(uf.find((i - 1) * w + j));
+            }
+            if (j > 0 and s[i][j + 1] == '#') {
+                arr.appendAssumeCapacity(uf.find(i * w + j - 1));
+            }
+            if (i + 1 < h and s[i + 1][j] == '#') {
+                arr.appendAssumeCapacity(uf.find((i + 1) * w + j));
+            }
+            if (j + 1 < w and s[i][j + 1] == '#') {
+                arr.appendAssumeCapacity(uf.find(i * w + j + 1));
+            }
+            if (arr.items.len == 0) {
+                dif += 1;
+                continue;
+            }
+            mem.sortUnstable(u32, arr.items, {}, std.sort.asc(u32));
+            for (0..arr.items.len - 1) |k| {
+                if (arr.items[k] != arr.items[k + 1]) dif -= 1;
+            }
+            cnt += 1;
+        }
+    }
+    const ans = MInt.init(dif).mul(MInt.init(cnt).inv());
+
 }
 
 const FixedQueue = lib.FixedQueue;

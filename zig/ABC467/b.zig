@@ -12,23 +12,13 @@ const force_optimized = false;
 
 
 pub fn solve() !void {
-    const n = readString();
-    for (0..n.len) |i| n[i] -= '0';
-    mem.sortUnstable(u8, n, {}, std.sort.desc(u8));
-    const m: u5 = @intCast(n.len);
-    var ans: u64 = 0;
-    for (0..@as(u32, 1)<<m) |s| {
-        var a: u32 = 0;
-        var b: u32 = 0;
-        var i: u5 = 0;
-        while (i < m) : (i += 1) {
-            if ((s >> i) & 1 != 0) {
-                b = b * 10 + n[i];
-            } else {
-                a = a * 10 + n[i];
-            }
-        }
-        ans = @max(@as(u64, a) * b, ans);
+    const n = readInt(u32);
+    var ans: u32 = 0;
+    for (0..n) |_| {
+        const a = readInt(u32);
+        const b = readInt(u32);
+        const s = readString();
+        if (mem.eql(u8, s, "keep")) ans += b - a;
     }
     print("{d}\n", .{ans});
 }
